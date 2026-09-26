@@ -208,6 +208,7 @@
   const currentMouse = [0.5, 0.5];
   const targetMouse = [0.5, 0.5];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mobileMedia = matchMedia('(max-width: 640px)');
 
   function render() {
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -224,7 +225,7 @@
 
   function tick(time) {
     raf = 0;
-    if (lastDrawTime && time - lastDrawTime < 1000 / 30) {
+    if (lastDrawTime && time - lastDrawTime < 1000 / (mobileMedia.matches ? 24 : 30)) {
       start();
       return;
     }
@@ -250,22 +251,61 @@
 
   function resize() {
     const bounds = container.getBoundingClientRect();
-    const scale = Math.min(devicePixelRatio || 1, 1.25, 1600 / Math.max(1, bounds.width), 1200 / Math.max(1, bounds.height));
+    const mobile = mobileMedia.matches;
+    gl.useProgram(program);
+    float('uSpeed', mobile ? 0.25 : 0.35);
+    float('uScale', mobile ? 2.8 : 4);
+    float('uDetail', mobile ? 2 : 3);
+    float('uGlow', mobile ? 1.25 : 1.6);
+    float('uCoreSize', mobile ? 0.13 : 0.1);
+    float('uBlackPoint', mobile ? 0.08 : 0.05);
+    float('uBrightness', mobile ? 1.05 : 1.3);
+    float('uGrain', mobile ? 0 : 1);
+    float('uOpacity', mobile ? 0.68 : 0.72);
+    color('uColor1', theme.getPropertyValue(mobile ? '--purple' : '--purple-bright'));
+    color('uColor2', theme.getPropertyValue(mobile ? '--pink-bright' : '--pink'));
+    color('uColor3', theme.getPropertyValue(mobile ? '--lavender' : '--white'));
+    const scale = mobile
+      ? Math.min(devicePixelRatio || 1, 1.5, 1200 / Math.max(1, bounds.width), 2000 / Math.max(1, bounds.height))
+      : Math.min(devicePixelRatio || 1, 1.25, 1600 / Math.max(1, bounds.width), 1200 / Math.max(1, bounds.height));
     canvas.width = Math.max(1, Math.round(bounds.width * scale));
     canvas.height = Math.max(1, Math.round(bounds.height * scale));
     render();
   }
 
-  hero.addEventListener('pointermove', event => {
-    if (event.pointerType === 'touch') return;
+  let touchActive = false;
+  let touchResetTimer = 0;
+  function updateMouse(event) {
     const bounds = container.getBoundingClientRect();
     targetMouse[0] = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
     targetMouse[1] = Math.max(0, Math.min(1, 1 - (event.clientY - bounds.top) / bounds.height));
+  }
+  hero.addEventListener('pointerdown', event => {
+    if (event.pointerType !== 'touch') return;
+    clearTimeout(touchResetTimer);
+    touchActive = true;
+    updateMouse(event);
+  }, { passive: true });
+  hero.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch' && !touchActive) return;
+    updateMouse(event);
   }, { passive: true });
   hero.addEventListener('pointerleave', () => {
+    if (touchActive) return;
     targetMouse[0] = 0.5;
     targetMouse[1] = 0.5;
   });
+  function finishTouch(event) {
+    if (event.pointerType !== 'touch') return;
+    touchActive = false;
+    clearTimeout(touchResetTimer);
+    touchResetTimer = setTimeout(() => {
+      targetMouse[0] = 0.5;
+      targetMouse[1] = 0.5;
+    }, 900);
+  }
+  window.addEventListener('pointerup', finishTouch);
+  window.addEventListener('pointercancel', finishTouch);
 
   if ('ResizeObserver' in window) new ResizeObserver(resize).observe(container);
   else window.addEventListener('resize', resize, { passive: true });

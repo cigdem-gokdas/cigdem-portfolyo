@@ -23,14 +23,53 @@ if (canvas && context) {
   });
 
   const pointer = { x: 0, y: 0, active: false };
+  const hero = canvas.closest('.hero');
   let smoothedAngle = null;
+  let touchActive = false;
+  let touchResetTimer = 0;
 
-  window.addEventListener('pointermove', (event) => {
+  function updatePointer(event) {
     pointer.x = event.clientX;
     pointer.y = event.clientY;
     pointer.active = true;
+  }
+
+  function finishTouch(event) {
+    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+    touchActive = false;
+    clearTimeout(touchResetTimer);
+    touchResetTimer = setTimeout(() => { pointer.active = false; }, 1800);
+  }
+
+  window.addEventListener('pointermove', (event) => {
+    if (event.pointerType === 'touch' && !touchActive) return;
+    updatePointer(event);
   }, { passive: true });
-  window.addEventListener('blur', () => { pointer.active = false; });
+  hero?.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+    clearTimeout(touchResetTimer);
+    touchActive = true;
+    updatePointer(event);
+  }, { passive: true });
+  window.addEventListener('pointerup', finishTouch);
+  window.addEventListener('pointercancel', finishTouch);
+  window.addEventListener('blur', () => {
+    clearTimeout(touchResetTimer);
+    touchActive = false;
+    pointer.active = false;
+  });
+
+  function resizePortraitCanvas() {
+    const bounds = canvas.getBoundingClientRect();
+    const resolution = Math.min(1080, Math.max(1, Math.round(bounds.width * Math.min(window.devicePixelRatio || 1, 2))));
+    if (canvas.width !== resolution || canvas.height !== resolution) {
+      canvas.width = resolution;
+      canvas.height = resolution;
+    }
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(resizePortraitCanvas).observe(canvas);
+  else window.addEventListener('resize', resizePortraitCanvas, { passive: true });
+  resizePortraitCanvas();
 
   function drawImageCover(image) {
     const cropSize = Math.min(image.naturalWidth, image.naturalHeight);
