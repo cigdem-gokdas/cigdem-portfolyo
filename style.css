@@ -9,6 +9,7 @@
   --lavender: #ece0ff;
   --pink: #ffc3e6;
   --pink-bright: #f49bd7;
+  --video-patch: #7e4fbc;
   --white: #fff9ff;
   --text: #f7efff;
   --text-muted: #d4c4e9;
@@ -57,7 +58,10 @@ img, canvas { display: block; max-width: 100%; }
 .orbit-spark-one { top: 98px; left: 135px; font-size: 20px; }
 .orbit-spark-two { right: 125px; bottom: 98px; font-size: 13px; }
 .portrait-halo { position: absolute; top: 50%; left: 50%; width: 568px; height: 568px; transform: translate(-50%, -50%); border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple-glow) 45%, var(--lilac)); box-shadow: 0 0 0 12px color-mix(in srgb, var(--lilac) 9%, transparent), 0 0 75px color-mix(in srgb, var(--purple-glow) 38%, transparent), 0 32px 80px var(--shadow); }
-#hero-canvas { position: absolute; z-index: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 540px; height: 540px; border-radius: 50%; background: radial-gradient(circle, var(--purple-bright), var(--purple)); object-fit: cover; }
+.canvas-container { position: absolute; z-index: 1; top: 50%; left: 50%; width: 540px; height: 540px; overflow: hidden; border-radius: 50%; transform: translate(-50%, -50%); }
+#hero-canvas { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle, var(--purple-bright), var(--purple)); object-fit: cover; }
+.video-cursor-patch { position: absolute; z-index: 2; left: 5%; top: 31.8%; width: 35px; height: 35px; border-radius: 50%; background-color: var(--video-patch); filter: blur(6px); pointer-events: none; opacity: 0; }
+.video-cursor-patch.is-visible { opacity: 1; }
 .orbit-nav { position: absolute; z-index: 20; inset: 0; pointer-events: none; }
 .orbit-ring { position: absolute; inset: 0; transform: translateZ(0); transform-origin: center; will-change: transform; animation: orbit-spin 90s linear infinite; }
 .orbit-item { position: absolute; top: 50%; left: 50%; width: 0; height: 0; transform: translateZ(0) rotate(var(--angle)) translateX(var(--orbit-radius)) rotate(calc(0deg - var(--angle))); }
@@ -168,7 +172,7 @@ img, canvas { display: block; max-width: 100%; }
   .orbit-line-outer { width: 580px; height: 580px; }
   .orbit-line-inner { width: 500px; height: 500px; }
   .portrait-halo { width: 492px; height: 492px; }
-  #hero-canvas { width: 466px; height: 466px; }
+  .canvas-container { width: 466px; height: 466px; }
   .projects-grid, .education-grid { grid-template-columns: repeat(2, 1fr); }
   .featured-project { grid-column: span 2; }
   .skills-grid { grid-template-columns: repeat(2, 1fr); }
@@ -185,7 +189,8 @@ img, canvas { display: block; max-width: 100%; }
   .orbit-line-outer { width: calc(var(--orbit-radius) + var(--orbit-radius)); height: calc(var(--orbit-radius) + var(--orbit-radius)); border-style: solid; border-color: color-mix(in srgb, var(--lilac) 25%, transparent); }
   .orbit-line-inner { width: calc(var(--orbit-radius) + var(--orbit-radius) - 36px); height: calc(var(--orbit-radius) + var(--orbit-radius) - 36px); }
   .portrait-halo { width: calc(var(--portrait-size) + 14px); height: calc(var(--portrait-size) + 14px); }
-  #hero-canvas { width: var(--portrait-size); height: var(--portrait-size); border-radius: 50%; }
+  .canvas-container { width: var(--portrait-size); height: var(--portrait-size); }
+  .video-cursor-patch { width: clamp(12px, 3.5vw, 21px); height: clamp(12px, 3.5vw, 21px); filter: blur(3px); }
   .orbit-spark { display: none; }
   .orbit-ring, .orbit-upright { animation-duration: 60s; }
   .orbit-pill { min-height: 46px; padding: 0 11px; gap: 5px; font-size: 11.5px; backdrop-filter: blur(10px); touch-action: manipulation; }

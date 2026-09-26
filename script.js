@@ -2,6 +2,7 @@ const canvas = document.getElementById('hero-canvas');
 const context = canvas?.getContext('2d');
 
 if (canvas && context) {
+  const videoCursorPatch = canvas.parentElement?.querySelector('.video-cursor-patch');
   const frameCount = 64;
   const fullCircle = Math.PI * 2;
   const responseFactor = 0.26;
@@ -125,6 +126,10 @@ if (canvas && context) {
     const imageToDraw = selectedImage.complete && selectedImage.naturalWidth > 0
       ? selectedImage
       : centerImage;
+    videoCursorPatch?.classList.toggle(
+      'is-visible',
+      imageToDraw === rotationFrames[8] && imageToDraw.complete && imageToDraw.naturalWidth > 0
+    );
     if (imageToDraw.complete && imageToDraw.naturalWidth > 0) {
       drawImageCover(imageToDraw);
     }
