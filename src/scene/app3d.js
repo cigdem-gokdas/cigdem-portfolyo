@@ -56,7 +56,7 @@ export async function start3d() {
   loader.set(0.2);
 
   // Avatar
-  const avatar = new Avatar({ subtitle });
+  const avatar = new Avatar({ subtitle, scene, camera });
   await avatar.load('./assets/cigdem.glb', (p) => loader.set(0.2 + p * 0.75));
   avatar.idleTarget.copy(camera.position);
   scene.add(avatar.root);
@@ -64,7 +64,7 @@ export async function start3d() {
   const reveal = createReveal({ scene, room, dust, skills, getEntries: () => entries, sprites: (() => { const l = []; for (const r of [stationRoot, secRoot]) r.traverse((o) => { if (o.isSprite) l.push(o); }); return l; })() });
 
   // Avatarı izleyen yumuşak dolgu ışığı: sahne kararırken (efekt) avatar siyah siluet olmasın; kararmadan etkilenmez
-  const fill = new THREE.PointLight(0xb8ccff, 7, 5, 2);
+  const fill = new THREE.PointLight(0xffe9dc, 10, 5, 2);
   scene.add(fill);
   const tmpV = new THREE.Vector3();
 
@@ -103,10 +103,13 @@ export async function start3d() {
     return poster;
   }
 
-  // Post-process: hafif bloom (yüksek eşik)
-  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: 4 }));
+  // Post-process: hafif bloom (yüksek eşik). FPS ölçümü (1440x900): MSAA x4 + bloom ~50 fps, x2 ~59 fps (darboğaz: bloom bileşiminin MSAA hedefe yazması)
+  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: 2 }));
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.35, 0.5, 0.85));
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.35, 0.5, 0.85);
+  const bloomSetSize = bloom.setSize.bind(bloom);
+  bloom.setSize = (w, h) => bloomSetSize(Math.max(1, w >> 1), Math.max(1, h >> 1));   // bloom yarım çözünürlükte (FPS); bulanık, fark edilmez
+  composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const resize = () => {
     renderer.setSize(innerWidth, innerHeight, false);
@@ -303,5 +306,5 @@ export async function start3d() {
   // Karşılama: 600 ms sonra (altyazı; ses ilk tıklamadan sonra denenir)
   setTimeout(() => { touch(); avatar.speak(getLine('karsilama')); }, 600);
 
-  window.__portfolyo = { avatar, scene, camera, entries, reveal, activate, renderer, pickAt, posterMode, skills };
+  window.__portfolyo = { composer, avatar, scene, camera, entries, reveal, activate, renderer, pickAt, posterMode, skills };
 }

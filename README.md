@@ -45,19 +45,14 @@ Alt yolda çalışmasının nedeni: tüm yollar göreli (`./assets/...`, `./src/
 npx @gltf-transform/cli@4 optimize kaynak.glb assets/cigdem.glb --compress meshopt --texture-compress webp --texture-size 1024 --simplify false --join false --instance false --flatten false --palette false
 ```
 
-  Sonuç 3.97 MB → 1.33 MB; tarayıcıda MeshoptDecoder ile açılır.
+  Sonuç 2.18 MB; tarayıcıda MeshoptDecoder ile açılır.
 - Sitede GLB için indirme bağlantısı yok. Dosya herkese açık repoda ve sitede teknik olarak yine de erişilebilir. Avaturn kullanım şartları kişisel kullanımla sınırlı olabilir: bkz. `docs/LISANS-VE-AVATAR.md`.
-- Mevcut GLB'de yüz morph'ları yok; ağız hareketi yok, konuşurken baş hafifçe sallanır.
-- TalkingHead entegrasyonu Avaturn Type-2 (T-Pose) dışa aktarımını bekliyor. Yeni GLB gelince:
-  1. Hash ve morph kontrolü (morph target adları, göz kemikleri var mı).
-  2. TalkingHead dosyalarını ve LICENSE'ı kopyala (liste: `docs/NOTLAR.md` §6 sonu).
-  3. `src/avatar/Avatar.js` içindeki `TODO(TH)` noktalarını bağla (`speak`, `wave`, `point`, `lookAtPoint`, yürüme).
-  4. İstenirse HeadAudio ekle (3 dosya: `headaudio.min.mjs`, `headworklet.min.mjs`, `model-en-mixed.bin`).
+- Avatar Avaturn T2 dışa aktarımıdır (52 ARKit morph, 15 viseme, göz kemikleri). TalkingHead `avatarOnly` modunda, sesten dudak senkronu için HeadAudio ile kullanılır; ses yokken genel ağız hareketi vardır.
 
 ## Lisanslar
 
 - Three.js: MIT.
-- TalkingHead ve HeadAudio: MIT (henüz repoya kopyalanmadı).
+- TalkingHead ve HeadAudio: MIT, değiştirilmeden `src/vendor/` altında (LICENSE dosyalarıyla).
 - TalkingHead örnek avatarları/animasyonları ve Mixamo dosyaları kullanılmadı.
 - CV PDF'i repoda yok (`.gitignore` `*.pdf` dışlar).
 

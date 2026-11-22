@@ -144,3 +144,22 @@ Entegrasyon adımları:
 5. HeadAudio (isteğe bağlı): 3 dosya (§6 Seçenek A); kurulum §6 madde 1-7. Tek model İngilizce; Türkçe doğruluğu denemeden bilinmez.
 6. Ses yokken konuşma görünümü: sessiz AudioBuffer + viseme dizisi ya da `setValue('jawOpen', ...)` (§7).
 7. `opt.update` yuvası tek: yürüme deltaları ve `headaudio.update` aynı fonksiyonda çağrılmalı (§6 madde 7).
+
+---
+
+## F5 entegrasyon (Yapımcı) — TalkingHead + HeadAudio bağlandı
+
+GLB: Avaturn T2, gltf-transform optimize (meshopt + WebP 1024, simplify/join/instance/flatten/palette kapalı): 13,49 MB -> 2,18 MB. Head_Mesh'te 72 morph (52 ARKit + 15 `viseme_*` + eyesClosed/eyesLookUp/eyesLookDown/mouthOpen/mouthSmile), `targetNames` korunmuş; LeftEye/RightEye kemikleri var; Meshes Armature'ün çocuğu (avatarOnly'de `scene.add(armature)` yeterli). Optimize sonrası 11 skin (mesh başına bir; aynı kemikler). Eski GLB: ~/Projects/.gltf-work/old-f4.glb. Kopyalananlar (değiştirilmedi): src/vendor/talkinghead/{talkinghead,dynamicbones,retargeter}.mjs, playback-worklet.js, LICENSE; src/vendor/headaudio/{headaudio.min.mjs,headworklet.min.mjs,model-en-mixed.bin,LICENSE}. importmap (`three`, `three/addons/`) TH'nin tüm içe aktarmalarını (TH:25-35) zaten karşılıyor; ek eşleme gerekmedi.
+
+Kullanılan/doğrulanan davranışlar (dosya:satır, src/vendor/talkinghead/talkinghead.mjs):
+- avatarOnly ÇALIŞTI: renderer/sahne bizim; `animate(dtMs)` avatarOnly'de kare atlamaz ve çizmez (TH:2403-2420, 2748-2750 else dalı); `render()` avatarOnly'de boş (TH:1590-1594), yani `stopSpeaking()` içindeki `render()` güvenli (TH:3510-3520). `showAvatar` yalnız `armature`'ü sahneye ekler (TH:1407-1410).
+- Armature, mantıksal `avatar.root`'un çocuğu DEĞİL, sahnenin doğrudan çocuğu; her karede `position(x,0,z)` ve `rotation.y` root'tan kopyalanır. Neden: ayak-kalça dengesi `toe_world - armature.position` ve `box.setFromObject(armature)` (TH:2726-2733) armature'ün dünya konumunu bekler; iç içe olursa x/z yanlış düzeltilir.
+- Boy: TH `armature.scale=1` yapar (TH:1297); yükleme sonrası kutu yüksekliği 1,7 m'ye ölçeklenir (`armature.scale`), sahne ölçüleri korunur. Çalışıyor, ayak-kalça dengesi uyumlu.
+- `opt.update(dtMs)` kancası (TH:2739-2742): poz yazımından sonra, morph/çizimden önce. Delta'lar kemiğin O ANKİ quaternion'una kök-uzayında eklenir (Avatar.js `_apply`). HeadAudio `update(dtMs)` aynı kancada (Avatar.js `_hook`).
+- Poz: poz kemikleri (Hips..parmaklar) TH her karede yeniden yazar (TH:2692-2697) -> delta birikmez. GÖZ KEMİKLERİ poz şablonunda YOK ve TH gözü `eyeLook*` morphlarıyla yönlendirir, bone'u yazmaz (TH:2316-2325): bu yüzden göz delta'sı bağ quaternion'undan (`_eyeBase`) başlatılır, yoksa her karede birikip gözler döner (hata yaşandı).
+- 'neutral' ifadesindeki idle animasyonları (TH:419-440): `pose` (side/hip/straight 5-30 sn'de rastgele; bacak/kol çakışır) ve `eyes` (rastgele bakış, TH:377-404) çıkarıldı; `head.idle` genliği küçültüldü; `head.playPose('straight')` (TH:4500-4529) ile sabit simetrik poz. Göz kırpma (`animTemplateBlink`, TH:411-415), nefes, kaş/ağız mikro hareketleri yerleşik kalır. Mutasyon yalnız `head.animMoods.neutral.anims` üzerinde (kaynak dosya değişmedi).
+- Konuşma (sesli): `audioCtx.decodeAudioData` (mp3) -> `head.speakAudio({audio: AudioBuffer}, {isRaw:true})` (TH:3106; `isRaw` jest/lookAtCamera/`speakWithHands` atlar, TH:3322-3326 ve 3220-3226). Ses `audioAnalyzerNode -> audioSpeechGainNode` (TH:945-963); HeadAudio tester.html:265-302 deseniyle `audioSpeechGainNode`'a bağlı, 150 ms DelayNode ile `audioReverbNode`'a. `onvalue` -> `mtAvatar[key].newvalue` (HAT:297-299). Süre: `audio.duration*1000+300` ms.
+- Konuşma (sessiz): `mtAvatar[k].realtime` (TH:1672-1676 sırası: fixed > realtime > system > newvalue) ile jawOpen/viseme_aa/mouthFunnel'a düşük genlikli yumuşak gürültü; bitince `realtime=null`.
+- Bakış: kendi baş/boyun (%70) + göz kemiği (kalan, gecikme dahil) delta'sı; TH `lookAt/makeEyeContact` KULLANILMADI (random drot, kuyruk anim, bone yerine morph).
+- `lipsyncLang:'en'`, `lipsyncModules:[]`, `ttsEndpoint:''`; `words` hiç verilmediği için lipsync modülü aranmaz (TH:3112, 2832-2854).
+- Dikkat: `head.stop()` ses bağlamını askıya alır (TH:4309-4311) — çağrılmıyor.

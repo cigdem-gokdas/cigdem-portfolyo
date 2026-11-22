@@ -1,6 +1,4 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 const clamp = THREE.MathUtils.clamp;
 const damp = (v, t, k, dt) => v + (t - v) * (1 - Math.exp(-k * dt));
@@ -16,43 +14,29 @@ const WAVE_HOLD = 0.75; // sallama süresi (3 salınım); toplam ~1.75 s
 const FINGERS = ['Index', 'Middle', 'Ring', 'Pinky'];
 
 // Hiyerarşi sırası: ebeveynler önce uygulanır
-const ORDER = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',
+const ORDER = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftEye', 'RightEye',
   'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot',
   'LeftArm', 'LeftForeArm', 'RightArm', 'RightForeArm'];
 
 /**
  * Avatar: sahnenin tek avatar arayüzü.
- * Mevcut GLB: Mixamo iskeleti, morph target YOK. Bu yüzden ağız hareketi yok; konuşma sırasında
- * "konuşuyor" görünümü için baş/boyun hafif ritmik nod yapar (morph yokluğunun yerine geçen yorum).
- *
- * Tüm hareketler update(dt) içinde her karede, kemiğin BAĞ (bind/duruş) pozuna göre DELTA olarak uygulanır:
- * Mixamo bacak kemiklerinde bağ rotasyonu ~180 derece (z≈π) olduğundan mutlak açı yazılmaz; delta avatar-kök
- * uzayında tanımlanır (+X yanal, +Y yukarı, +Z ön) ve _apply ile kemiğin base quaternion'una eklenir.
- * Durum makinesi: idle | walking | pointing | waving.
- *
- * TODO(TH) TalkingHead (yeni GLB: morph + göz kemiği) eşlemesi, docs/NOTLAR.md'ye göre:
- *  - speak(line)    -> head.speakAudio({audio: sessiz AudioBuffer, words, wtimes, wdurations, visemes, vtimes, vdurations},
- *                      null, onsubtitles) (sesli: gerçek AudioBuffer); lipsyncModules: [] ya da HeadAudio akustik viseme
- *                      (head.opt.update kancası). Durdurma: head.stopSpeaking(). Nod kalkar; sessiz konuşma için
- *                      head.setValue('jawOpen', v) (NOTLAR 7.3).
- *  - wave()         -> head.playGesture('👋', 1.6, false, 400); TH'de bilek salınımı yok, opt.update içinde delta eklenir.
- *  - point(target)  -> head.playGesture('index', dur, true /* sağ el *\/, 500); hedefe yönlendirme head.ikSolve(...) ya da
- *                      bu dosyadaki _applyRightArm (opt.update içinde).
- *  - lookAtPoint(v) -> head.speakTo = v (dünya konumu) ya da head.lookAt(x, y, t) (ekran pikseli) / head.lookAtCamera(t).
- *  - faceTowards/walkTo/home -> TH'de yürüme yok: head.armature.position (x,z) ve rotation.y güvenli (NOTLAR 5);
- *                      bacak/kol deltaları head.opt.update(dt) kancasında (HeadAudio ile tek fonksiyon). playAnimation çağrılmaz.
+ * GLB: Avaturn T2 (Mixamo adlı iskelet, 52 ARKit + 15 Oculus viseme morph, göz kemikleri). TalkingHead avatarOnly modunda
+ * çalışır: sahne ve renderer bizim; TalkingHead yalnızca pozu/morphları/göz kırpmayı/nefesi/ifadeyi her karede yazar
+ * (head.animate(dt_ms)), bizim prosedürel hareketlerimiz head.opt.update kancasında (poz yazımından sonra, morph ve çizimden önce)
+ * kemiklerin O ANKİ quaternion'una kök uzayında DELTA olarak eklenir (docs/NOTLAR.md §5; "F5 entegrasyon").
+ * Kök uzayı: +X yanal, +Y yukarı, +Z ön. Durum makinesi: idle | walking | pointing | waving.
  */
 export class Avatar {
-  constructor({ subtitle } = {}) {
-    this.root = new THREE.Group();   // sahneye eklenen kök; yönü (+Z ön) burada döner
+  constructor({ subtitle, scene, camera } = {}) {
+    this.root = new THREE.Group();   // mantıksal kök (konum/yön burada); armature her karede buradan eşlenir
     this.subtitle = subtitle;
+    this.scene = scene; this.camera = camera;
     this.bones = {};
-    this.base = {};                  // kemiklerin bağ pozu (kol duruşu sonrası) yerel quaternion'ları
     this.lookTarget = null;          // THREE.Vector3 | null
     this.idleTarget = new THREE.Vector3(0, 1.6, 6); // null iken bakılan nokta (main kamerayı verir)
     this.homePos = new THREE.Vector3(0, 0, 0);
     this.baseYaw = 0;
-    this.bodyYaw = 0; this.headYaw = 0; this.headPitch = 0;
+    this.bodyYaw = 0; this.headYaw = 0; this.headPitch = 0; this._relYaw = 0; this._tPitch = 0;
     this.t = 0;
     this.state = 'idle';             // idle | walking | pointing | waving
     this.userInteracted = false;     // ilk tıklamaya kadar ses denenmez
@@ -60,45 +44,67 @@ export class Avatar {
     this.armW = 0;                   // sağ kol geçersiz kılma ağırlığı (0..1)
     this.fingerW = 0;
     this._walk = null; this._act = null; this._turn = null;
-    this.speaking = false; this.nodAmp = 0; this._speakId = 0; this._idleW = []; this._audio = null; this._sleep = null;
+    this.speaking = false; this._voiced = false; this._mouth = 0; this._speakId = 0; this._idleW = []; this._sleep = null;
     this.side = { Left: 1, Right: -1 };
     this.curlAxis = {};
+    this.head = null; this.headaudio = null; this._haOk = false; this._frames = 0; this._eyeBase = {}; this._dtHook = 0.016;
     addEventListener('pointerdown', () => { this.userInteracted = true; }, { once: true });
   }
 
   async load(url, onProgress) {
-    const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(url, (e) => e.total && onProgress?.(e.loaded / e.total));
-    const model = gltf.scene;
-    // Boyu 1.7 m'ye ölçekle, ayakları yere oturt
-    const box = new THREE.Box3().setFromObject(model);
-    const s = 1.7 / (box.max.y - box.min.y);
-    model.scale.setScalar(s);
-    model.position.y = -box.min.y * s;
-    model.traverse((o) => {
+    const { TalkingHead } = await import('../vendor/talkinghead/talkinghead.mjs');
+    this.head = new TalkingHead(document.createElement('div'), {
+      ttsEndpoint: '', lipsyncModules: [],
+      avatarOnly: true, avatarOnlyScene: this.scene, avatarOnlyCamera: this.camera,
+      update: (dtMs) => this._hook(dtMs),
+    });
+    const head = this.head;
+    // Göz teması/baş hareketi bizim bakış kodumuzda; TalkingHead'in rastgele boşta hareketi kapalı. Göz kırpma/nefes/ifade yerleşik.
+    await head.showAvatar({ url, body: 'F', avatarMood: 'neutral', lipsyncLang: 'en', avatarIdleEyeContact: 0, avatarIdleHeadMove: 0 },
+      (e) => e.total && onProgress?.(e.loaded / e.total));
+    // Boşta rastgele poz değişimi (hip/side/straight) yürüme/işaret deltalarıyla çakışır: neutral ifadesinin 'pose' animasyonunu çıkar,
+    // sabit simetrik 'straight' pozunu kur (ifade: göz kırpma, nefes, kaş/ağız mikro hareketleri yerleşik kalır)
+    // Göz gezdirme ('eyes') kaldırılır (gözleri bakış kodumuz sürer); boşta baş hareketi ('head'.idle) küçültülür, konuşurkenki kalır.
+    const mood = head.animMoods.neutral;
+    mood.anims = mood.anims.filter((a) => a.name !== 'pose' && a.name !== 'eyes');
+    const hd = mood.anims.find((a) => a.name === 'head');
+    if (hd) hd.idle.vs = { bodyRotateX: [[-0.01, 0.03]], bodyRotateY: [[-0.04, 0.04]], bodyRotateZ: [[-0.02, 0.02]] };
+    // Gülümseme + çene birleşimi köpek dişlerini öne çıkarıyordu: gülümseme/yanak büzmesi üst sınırı 0.15 (applied değeri sınırlanır)
+    for (const k of ['mouthSmile', 'mouthSmileLeft', 'mouthSmileRight', 'cheekSquintLeft', 'cheekSquintRight']) if (head.mtAvatar[k]) head.mtAvatar[k].max = 0.15;
+    head.playPose('straight');
+    const arm = head.armature;
+    this.armature = arm;
+    arm.traverse((o) => {
       if (o.isMesh) {
-        o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
-        // Kök neden (göğüs parlaması): GLB malzemeleri metalness 1 / roughness 1; ortam haritası yok, tek spot ışığın
-        // speküleri dekolte/göğüs bölgesinde keskin beyaz bir nokta üretiyor ve bloom onu büyütüyordu. Zorla mat yap.
-        for (const m of [].concat(o.material)) {
-          if (m && m.isMeshStandardMaterial) { m.metalness = 0; m.roughness = Math.max(m.roughness, 0.7); m.envMapIntensity = 0; }
+        // Gölge: görünmeyecek küçük mesh'ler (göz/kirpik/diş/dil) gölge haritasına girmez (FPS)
+        o.castShadow = !/^(Eye|EyeAO|Eyelash|Teeth|Tongue)_Mesh$/.test(o.name); o.receiveShadow = true; o.frustumCulled = false;
+        // Ortam haritası yok; göğüs parlaması metalik/speküler katkıdan geliyordu. Deri/saç/giysi: metalness 0, pürüzlülük dokudan (roughnessMap) ve
+        // orijinal faktörden gelir, zorla mat yapılmaz. Göz malzemelerine dokunulmaz (parlaklık istenir).
+        if (/^(Eye|EyeAO)_Mesh$/.test(o.name)) { /* göz: olduğu gibi */ } else {
+          for (const m of [].concat(o.material)) if (m && m.isMeshStandardMaterial) { m.metalness = 0; m.metalnessMap = null; m.needsUpdate = true; }
         }
       }
       if (o.isBone) this.bones[o.name] = o;
     });
-    this.root.add(model);
-    this.model = model;
-    this.scale = s;
-    this.root.updateMatrixWorld(true);
-    // Yanlılık işareti (kök uzayında x): Left +, Right -
+    this._syncArmature();
+    // TalkingHead pozu (kollar aşağı) 2 s'lik geçişle kurar: hızlı sar, sonra yanlılık ve parmak eksenlerini hesapla
+    head.animate(2500); head.animate(2500); head.animate(50);
+    // Boyu 1.7 m'ye ölçekle (sahne ölçüleri, poster kadrajı, tıklama kutusu buna göre). TalkingHead ölçeği yalnızca yüklemede 1'e sabitler.
+    arm.updateMatrixWorld(true);
+    const bb = new THREE.Box3().setFromObject(arm);
+    this.scale = 1.7 / (bb.max.y - bb.min.y);
+    arm.scale.setScalar(this.scale);
+    head.animate(50); head.animate(50);
+    this.root.updateMatrixWorld(true); arm.updateMatrixWorld(true);
     for (const sd of ['Left', 'Right']) {
       const a = this.bones[sd + 'Arm'];
       if (a) this.side[sd] = Math.sign(this.root.worldToLocal(a.getWorldPosition(new THREE.Vector3())).x) || this.side[sd];
     }
-    this._poseArms();
-    this.model.updateMatrixWorld(true);
-    for (const k of Object.keys(this.bones)) this.base[k] = this.bones[k].quaternion.clone();
-    this.hipsY = this.bones.Hips ? this.bones.Hips.position.y : 0;
     this._computeCurlAxes();
+    // Göz kemikleri poz şablonunda yok (TalkingHead gözü eyeLook* morphlarıyla yönlendirir, kemiği her karede yazmaz):
+    // delta birikmesin diye bağ quaternion'u saklanır, her karede ondan başlanır.
+    this._eyeBase = { LeftEye: this.bones.LeftEye.quaternion.clone(), RightEye: this.bones.RightEye.quaternion.clone() };
+    await this._setupHeadAudio();
 
     // Tıklama kutusu: avatar gövdesi (SkinnedMesh'i CPU'da raycast etmemek için görünmez kutu)
     const hit = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.5), new THREE.MeshBasicMaterial({ visible: false }));
@@ -108,22 +114,29 @@ export class Avatar {
     this.hitbox = hit;
   }
 
-  // A-pozdan doğal duruş: kol ve ön kolları dünya uzayında aşağı çevirir (eksen bağımsız).
-  _poseArms() {
-    for (const side of ['Left', 'Right']) {
-      this._aim(this.bones[side + 'Arm'], this.bones[side + 'ForeArm'], 0.10, 0.0);
-      this._aim(this.bones[side + 'ForeArm'], this.bones[side + 'Hand'], 0.05, 0.12);
-    }
+  // HeadAudio: ses -> akustik viseme (tester.html:265-302 deseni). Başarısız olursa genel ağız hareketine düşülür.
+  async _setupHeadAudio() {
+    try {
+      const head = this.head, ctx = head.audioCtx;
+      const { HeadAudio } = await import('../vendor/headaudio/headaudio.min.mjs');
+      await ctx.audioWorklet.addModule(new URL('../vendor/headaudio/headworklet.min.mjs', import.meta.url).href);
+      const ha = new HeadAudio(ctx, { visemeMinMs: 120, processorOptions: {}, parameterData: { vadMode: 1 } });
+      await ha.loadModel(new URL('../vendor/headaudio/model-en-mixed.bin', import.meta.url).href);
+      head.audioSpeechGainNode.connect(ha);
+      const delay = new DelayNode(ctx, { delayTime: 0.15 });   // analiz sesten önce bitsin: ses 150 ms gecikmeli çıkar
+      head.audioSpeechGainNode.disconnect(head.audioReverbNode);
+      head.audioSpeechGainNode.connect(delay);
+      delay.connect(head.audioReverbNode);
+      ha.onvalue = (key, value) => { const m = head.mtAvatar[key]; if (m) Object.assign(m, { newvalue: value, needsUpdate: true }); };
+      this.headaudio = ha; this._haOk = true;
+    } catch (e) { console.warn('HeadAudio kurulamadı, genel ağız hareketi kullanılacak', e); }
   }
 
-  _aim(bone, child, out, fwd) {
-    if (!bone || !child) return;
-    bone.updateWorldMatrix(true, true);
-    const p = new THREE.Vector3(), c = new THREE.Vector3();
-    bone.getWorldPosition(p); child.getWorldPosition(c);
-    const cur = c.sub(p).normalize();
-    const sign = Math.sign(cur.x) || 1;
-    this._rotateToward(bone, cur, new THREE.Vector3(sign * out, -1, fwd).normalize(), 1);
+  // armature (sahnenin doğrudan çocuğu) kök konum/yönünü izler: TalkingHead ayak-kalça dengesi armature.position'ı dünya konumu sayar
+  _syncArmature() {
+    const a = this.armature; if (!a) return;
+    a.position.set(this.root.position.x, 0, this.root.position.z);
+    a.rotation.set(0, this.root.rotation.y, 0);
   }
 
   // bone'u dünya uzayında cur yönünden dir yönüne w oranında döndürür
@@ -156,14 +169,14 @@ export class Avatar {
     }
   }
 
-  // Kök uzayında tanımlı bir dönüşü kemiğin bağ rotasyonunun üstüne uygular
+  // Kök uzayında tanımlı bir dönüşü kemiğin O ANKİ (TalkingHead'in bu karede yazdığı) quaternion'una ekler
   _apply(name, qRoot) {
-    const b = this.bones[name]; if (!b || !this.base[name]) return;
+    const b = this.bones[name]; if (!b) return;
     b.parent.updateWorldMatrix(true, false);
     const rootQ = this.root.getWorldQuaternion(new THREE.Quaternion());
     const parentQ = b.parent.getWorldQuaternion(new THREE.Quaternion());
     const worldDelta = rootQ.clone().multiply(qRoot).multiply(rootQ.clone().invert());
-    b.quaternion.copy(parentQ.clone().invert().multiply(worldDelta).multiply(parentQ).multiply(this.base[name]));
+    b.quaternion.copy(parentQ.clone().invert().multiply(worldDelta).multiply(parentQ).multiply(b.quaternion));
   }
 
   // ---------- Durum makinesi ----------
@@ -219,13 +232,12 @@ export class Avatar {
     if (this.state === 'idle' && this._idleW.length) { const w2 = this._idleW; this._idleW = []; w2.forEach((r) => r()); }
   }
 
+  // Her çizim karesinde: durum makinesi + kök/bakış hesapları, sonra TalkingHead'i sür (poz+morph yazar, kancayı çağırır)
   update(dt) {
-    if (!this.model) return;
+    if (!this.head || !this.armature) return;
     this.t += dt;
     this._stepAct(dt);
-    const e = (a, b, c) => new THREE.Quaternion().setFromEuler(new THREE.Euler(a, b, c));
-    const D = {};
-    const add = (n, q) => { D[n] = D[n] ? D[n].multiply(q) : q; };
+    this._dtHook = dt;
 
     // Bakış hedefi: dünya uzayında yaw/pitch
     const walking = !!this._walk && this._walk.stage === 'go';
@@ -239,30 +251,38 @@ export class Avatar {
     const pitch = Math.atan2(d.y, Math.hypot(d.x, d.z));
 
     if (!this._turn) {
-      // Boştayken gövde hedefe en fazla %20 döner, kalanı boyun+baş üstlenir
+      // Boştayken gövde hedefe en fazla %20 döner, kalanı boyun+baş+göz üstlenir
       const inf = (this._walk || this._act) ? 0 : 0.2;
       const bodyT = this.baseYaw + clamp(wrapA(worldYaw - this.baseYaw) * inf, -0.5, 0.5);
       this.bodyYaw += wrapA(bodyT - this.bodyYaw) * (1 - Math.exp(-2.5 * dt));
     }
     this.root.rotation.y = this.bodyYaw;
-    const relYaw = clamp(wrapA(worldYaw - this.bodyYaw), -1.0, 1.0);
-    this.headYaw = damp(this.headYaw, relYaw, 5, dt);
-    this.headPitch = damp(this.headPitch, clamp(pitch, -0.35, 0.35), 5, dt);
+    this._relYaw = clamp(wrapA(worldYaw - this.bodyYaw), -1.0, 1.0);
+    this._tPitch = clamp(pitch, -0.35, 0.35);
+    this.headYaw = damp(this.headYaw, this._relYaw, 5, dt);
+    this.headPitch = damp(this.headPitch, this._tPitch, 5, dt);
+    this._syncArmature();
+    this.head.animate(dt * 1000);   // -> _hook(dtMs)
+  }
 
-    // Nefes
-    const br = Math.sin(this.t * 1.6) * 0.012;
-    add('Spine', e(br, 0, 0)); add('Spine1', e(br * 0.8, 0, 0)); add('Spine2', e(br * 0.6, 0, 0));
+  // head.opt.update kancası: TalkingHead bu karede pozu yazdı, morphlar ve çizim henüz yok. Burada delta + HeadAudio + ağız.
+  _hook(dtMs) {
+    const dt = Math.min(dtMs / 1000, 0.1);
+    this._frames++;
+    this.headaudio?.update(dtMs);
+    this._mouthStep(dt);
+    const e = (a, b, c) => new THREE.Quaternion().setFromEuler(new THREE.Euler(a, b, c));
+    const D = {};
+    const add = (n, q) => { D[n] = D[n] ? D[n].multiply(q) : q; };
 
-    // Konuşma: baş hafif ritmik nod (morph yok)
-    this.nodAmp = damp(this.nodAmp, this.speaking ? 1 : 0, 6, dt);
-    const nod = this.nodAmp * (Math.sin(this.t * 2 * Math.PI * 2.7) * 0.035 + Math.sin(this.t * 2 * Math.PI * 1.1) * 0.02);
-    const nodYaw = this.nodAmp * Math.sin(this.t * 2 * Math.PI * 0.8) * 0.03;
-    add('Neck', e(-this.headPitch * 0.4 + nod * 0.4, this.headYaw * 0.4 + nodYaw * 0.4, 0));
-    add('Head', e(-this.headPitch * 0.6 + nod * 0.6, this.headYaw * 0.6 + nodYaw * 0.6, 0));
+    // Baş+boyun bakışın %70'ini, gözler kalanını (+ gecikmeyi) üstlenir
+    add('Neck', e(-this.headPitch * 0.28, this.headYaw * 0.28, 0));
+    add('Head', e(-this.headPitch * 0.42, this.headYaw * 0.42, 0));
+    const eyeY = clamp(this._relYaw - this.headYaw * 0.7, -0.6, 0.6), eyeP = clamp(this._tPitch - this.headPitch * 0.7, -0.4, 0.4);
+    add('LeftEye', e(-eyeP, eyeY, 0)); add('RightEye', e(-eyeP, eyeY, 0));
 
-    // Yürüyüş: kalça salınımı, bacaklar, karşı kol salınımı, hafif dikey bob
+    // Yürüyüş: kalça salınımı, bacaklar, karşı kol salınımı (Hips.y'ye dokunulmaz: TalkingHead ayak-kalça dengesi, NOTLAR §5)
     const A = this.gaitAmp;
-    let bob = 0;
     if (A > 0.004) {
       const p = this.gaitPhase;
       const legs = { Right: p, Left: p + Math.PI };
@@ -276,18 +296,39 @@ export class Avatar {
       }
       add('Hips', e(0, 0.07 * A * Math.sin(p), 0.03 * A * Math.cos(p)));
       add('Spine1', e(0, -0.05 * A * Math.sin(p), 0));
-      bob = 0.02 * A * Math.cos(2 * p);
       const fwdR = -0.3 * A * Math.sin(p), fwdL = 0.3 * A * Math.sin(p);
       if (this.armW < 0.01) {
         add('RightArm', qAxis(AX, -fwdR)); add('RightForeArm', qAxis(AX, -(0.15 * A + 0.35 * Math.max(0, fwdR))));
       }
       add('LeftArm', qAxis(AX, -fwdL)); add('LeftForeArm', qAxis(AX, -(0.15 * A + 0.35 * Math.max(0, fwdL))));
     }
-    if (this.bones.Hips) this.bones.Hips.position.y = this.hipsY + bob / this.scale;
-
-    for (const n of ORDER) if (D[n] || this.base[n]) this._apply(n, D[n] || new THREE.Quaternion());
+    for (const n of ORDER) if (D[n]) {
+      if (this._eyeBase[n]) this.bones[n].quaternion.copy(this._eyeBase[n]);
+      this._apply(n, D[n]);
+    }
 
     if (this.armW > 0.001 || this.fingerW > 0.001) this._applyRightArm();
+  }
+
+  // Ağız: sesli konuşmada HeadAudio sürer. Sesiz konuşmada (ya da HeadAudio yoksa) dile bağımsız düşük genlikli yumuşak hareket.
+  _mouthStep(dt) {
+    const mt = this.head.mtAvatar;
+    const on = this.speaking && !(this._voiced && this._haOk);
+    const t = this.t;
+    const env = 0.5 + 0.5 * Math.sin(t * 2 * Math.PI * 0.9 + 1.3);
+    const syl = Math.abs(Math.sin(t * 2 * Math.PI * 2.6) * 0.6 + Math.sin(t * 2 * Math.PI * 4.1 + 0.7) * 0.4);
+    const v = on ? syl * (0.45 + 0.55 * env) : 0;
+    this._mouth = damp(this._mouth, v, 22, dt);
+    const m = this._mouth;
+    const set = (k, val) => { const o = mt[k]; if (!o) return; if (val > 0.002) Object.assign(o, { realtime: val, needsUpdate: true }); else if (o.realtime !== null) Object.assign(o, { realtime: null, needsUpdate: true }); };
+    // Dişler öne çıkmasın: çene en çok ~0.18; dudak kapanışlı, yuvarlak/yarı açık viseme karışımı (aa/O/E düşük, dönüşümlü)
+    const ph = t * 2 * Math.PI * 1.3;
+    const wa = 0.5 + 0.5 * Math.sin(ph), wo = 0.5 + 0.5 * Math.sin(ph + 2.1), we = 0.5 + 0.5 * Math.sin(ph + 4.2);
+    set('jawOpen', Math.min(0.18, 0.18 * m));
+    set('viseme_aa', 0.10 * m * wa);
+    set('viseme_O', 0.14 * m * wo);
+    set('viseme_E', 0.07 * m * we);
+    set('mouthClose', 0.12 * m);
   }
 
   // Sağ kol: işaret (hedefe) ya da el sallama; parmaklar
@@ -296,7 +337,7 @@ export class Avatar {
     const arm = B.RightArm, fore = B.RightForeArm, hand = B.RightHand;
     if (!arm || !fore || !hand) return;
     const a = this._act;
-    this.model.updateMatrixWorld(true);
+    this.armature.updateMatrixWorld(true);
     if (a && this.armW > 0.001) {
       const rootQ = this.root.getWorldQuaternion(new THREE.Quaternion());
       const pa = arm.getWorldPosition(new THREE.Vector3());
@@ -324,7 +365,7 @@ export class Avatar {
     for (const f of FINGERS) for (let i = 1; i <= 3; i++) {
       const b = B[`RightHand${f}${i}`]; if (!b || !this.curlAxis[b.name]) continue;
       const ang = f === 'Index' ? 0 : amt[i - 1] * curlW;
-      b.quaternion.copy(this.base[b.name]).multiply(qAxis(this.curlAxis[b.name], ang));
+      if (ang) b.quaternion.multiply(qAxis(this.curlAxis[b.name], ang));
     }
   }
 
@@ -390,37 +431,40 @@ export class Avatar {
     await this._turnTo(Math.atan2(this.idleTarget.x - this.root.position.x, this.idleTarget.z - this.root.position.z), TURN_MS);
   }
 
-  // Konuşmayı hemen keser (ses + altyazı); bekleyen speak() promise'leri çözülür
+  // Konuşmayı hemen keser (ses + altyazı + ağız); bekleyen speak() promise'leri çözülür
   stopSpeak() {
-    this._speakId++; this.speaking = false; this.subtitle?.hide();
-    if (this._audio) { this._audio.pause(); this._audio.dispatchEvent(new Event('ended')); this._audio = null; }
+    this._speakId++; this.speaking = false; this._voiced = false; this.subtitle?.hide();
+    try { this.head?.stopSpeaking(); } catch (e) { /* ses yoktu */ }
     if (this._sleep) { clearTimeout(this._sleep.h); this._sleep.r(); this._sleep = null; }
   }
 
-  // Konuş: altyazı + (varsa, ilk tıklamadan sonra) assets/voice/<id>.mp3. Ağız hareketi yok (morph yok);
-  // konuşma süresince baş hafif nod yapar. Promise: konuşma bitince çözülür.
+  _wait(ms) { return new Promise((r) => { this._sleep = { r, h: setTimeout(r, ms) }; }); }
+
+  // Konuş: altyazı + (varsa, ilk tıklamadan sonra) assets/voice/<id>.mp3. Sesli: head.audioCtx ile çözülür, TalkingHead'e verilir
+  // (speakAudio, isRaw: jest/bakış bize ait), HeadAudio dudakları sesten sürer. Sessiz: genel ağız hareketi (_mouthStep).
+  // Promise: konuşma bitince çözülür.
   async speak(line) {
     if (!line) return;
     const id = ++this._speakId;
-    this.speaking = true;
+    this.speaking = true; this._voiced = false;
     this.subtitle?.show(line.text);
     let sure = Math.max(1500, line.text.length * 70);
-    if (this.userInteracted) {
+    if (this.userInteracted && this.head) {
       const url = `./assets/voice/${line.id}.mp3`;
       try {
-        const head = await fetch(url, { method: 'HEAD' });
-        if (head.ok) {
-          await new Promise((res) => {
-            const a = new Audio(url); this._audio = a;
-            a.addEventListener('ended', res); a.addEventListener('error', res);
-            a.play().catch(res);
-          });
-          sure = 0;
+        const probe = await fetch(url, { method: 'HEAD' });
+        if (probe.ok) {
+          const buf = await (await fetch(url)).arrayBuffer();
+          const audio = await this.head.audioCtx.decodeAudioData(buf);
+          if (id === this._speakId) {
+            this._voiced = true;
+            this.head.speakAudio({ audio }, { isRaw: true });
+            sure = audio.duration * 1000 + 300;
+          } else sure = 0;
         }
-      } catch (e) { /* ses yok: süre ile bekle */ }
+      } catch (e) { /* ses yok/çözülemedi: süre ile bekle */ }
     }
-    if (sure && id === this._speakId) await new Promise((r) => { this._sleep = { r, h: setTimeout(r, sure) }; });
-    this._audio = null; this._sleep = null;
-    if (id === this._speakId) { this.speaking = false; this.subtitle?.hide(); }
+    if (sure && id === this._speakId) await this._wait(sure);
+    if (id === this._speakId) { this.speaking = false; this._voiced = false; this._sleep = null; this.subtitle?.hide(); }
   }
 }
