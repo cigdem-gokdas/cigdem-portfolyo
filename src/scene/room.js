@@ -3,7 +3,7 @@ import * as THREE from 'three';
 const VURGU = 0x7cf3ff;
 
 // Yarım altıgen oda: zemin, 3 duvar, zemin-duvar ışık şeritleri, sahne dairesi, ışıklar
-// ve F3 için boş yer tutucular (hackathon plakaları, deneyim şeridi, eğitim çerçevesi).
+// (plakalar, deneyim şeridi ve eğitim çerçevesi sections.js'te).
 export function createRoom() {
   const room = new THREE.Group();
   const R = 7; // duvar mesafesi (apothem)
@@ -53,48 +53,18 @@ export function createRoom() {
   room.add(disc);
 
   // Işıklar: üstten tek SpotLight (gölge açık) + hafif dolgu
-  const spot = new THREE.SpotLight(0xdfeaff, 220, 14, 0.5, 0.9, 2);
+  const spot = new THREE.SpotLight(0xdfeaff, 110, 14, 0.5, 0.9, 2); // 220'de yukarı bakan ten (dekolte) 1.0'ı aşıp beyaza taşıyor + bloom; yarıya indirildi
   spot.position.set(0, 6.5, 1);
   spot.target.position.set(0, 0.8, 0);
   spot.castShadow = true;
   spot.shadow.mapSize.set(1024, 1024);
   spot.shadow.bias = -0.0005;
   room.add(spot, spot.target);
-  room.add(new THREE.HemisphereLight(0x3a4a6a, 0x05060a, 0.55));
-
-  // --- F3 yer tutucuları (tıklanamaz) ---
-  const dark = new THREE.MeshStandardMaterial({ color: 0x10141f, roughness: 0.8 });
-  const rim = (w, h) => new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, 0.02)),
-    new THREE.LineBasicMaterial({ color: VURGU, transparent: true, opacity: 0.4 })
-  );
-
-  // Sol duvarda iki hackathon plakası
-  [-1.1, 1.1].forEach((x) => {
-    const p = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.03), dark);
-    p.position.set(x, 1.9, 0.03);
-    p.add(rim(0.9, 0.6));
-    p.visible = false; // F3'e kadar gizli
-    walls[-60].add(p);
-  });
-
-  // Arka duvarda eğitim çerçevesi
-  const edu = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.1, 0.03), dark);
-  edu.position.set(0, 2.1, 0.03);
-  edu.add(rim(1.8, 1.1));
-  edu.visible = false; // F3'e kadar gizli
-  walls[0].add(edu);
-
-  // Odanın sağ yanında, derinlik (z) yönünde deneyim şeridi: ışıklı çizgi + 3 nokta (F3 yer tutucusu)
-  const SX = 4.6;
-  const line = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.01, 4.0), stripMat);
-  line.position.set(SX, 0.02, -2.5);
-  room.add(line);
-  [-4.5, -2.5, -0.5].forEach((z) => {
-    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.08, 24), stripMat);
-    dot.rotation.x = -Math.PI / 2; dot.position.set(SX, 0.025, z);
-    room.add(dot);
-  });
+  const hemi = new THREE.HemisphereLight(0x3a4a6a, 0x05060a, 0.55);
+  room.add(hemi);
+  // Açılış efektinde sahne ışığını kısmak için (k: 1 = normal)
+  const lights = [[spot, spot.intensity], [hemi, hemi.intensity]];
+  room.userData.setDim = (k) => { for (const [l, base] of lights) l.intensity = base * k; };
 
   return room;
 }

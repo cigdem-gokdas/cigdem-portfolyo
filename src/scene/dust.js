@@ -27,7 +27,25 @@ export function createDust(count = 400) {
   const points = new THREE.Points(geo, mat);
   points.frustumCulled = false;
 
+  // Açılış efekti: parçacıklar hedefe doğru akar (hız alanı), süre sonunda yumuşakça söner
+  let att = null;
+  points.userData.attract = (target, dur = 1.5) => { att = target ? { target: target.clone(), dur, t: 0 } : null; };
   points.userData.update = (dt, t) => {
+    if (att) {
+      att.t += dt;
+      const f = Math.min(1, att.t / 0.3) * Math.min(1, Math.max(0, (att.dur - att.t) / 0.4));
+      if (att.t >= att.dur) att = null;
+      else {
+        const k = 1.8 * f * dt, tg = att.target;
+        for (let i = 0; i < count; i++) {
+          const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2];
+          const dx = tg.x - x, dy = tg.y - y, dz = tg.z - z;
+          if (dx * dx + dy * dy + dz * dz < 0.12) { // vardı: rastgele yeniden doğ
+            pos[i * 3] = (Math.random() - 0.5) * 14; pos[i * 3 + 1] = Math.random() * 5; pos[i * 3 + 2] = (Math.random() - 0.5) * 14 - 1;
+          } else { pos[i * 3] += dx * k; pos[i * 3 + 1] += dy * k; pos[i * 3 + 2] += dz * k; }
+        }
+      }
+    }
     for (let i = 0; i < count; i++) {
       pos[i * 3 + 1] += speed[i] * dt;
       pos[i * 3] += Math.sin(t * 0.1 + i) * 0.003 * dt * 10;

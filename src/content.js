@@ -11,6 +11,7 @@ export async function loadContent() {
   lines = l;
 }
 
+export const getLines = () => lines;
 export const getSite = () => site;
 export const getSection = (id) => site.sections.find((s) => s.id === id);
 export const getLine = (id) => lines.find((l) => l.id === id);
