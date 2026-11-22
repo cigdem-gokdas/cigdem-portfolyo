@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Çiğdem Gökdaş</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <!-- Sabit sürüm, derleme yok -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="sahne"></canvas>
+  <header id="ust">
+    <span id="ad"></span>
+    <a id="duz-liste" href="#">Düz liste</a>
+  </header>
+  <div id="altyazi" aria-live="polite"></div>
+  <div id="yukleme"><span id="yuzde">%0</span></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
