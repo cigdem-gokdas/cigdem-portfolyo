@@ -1,4 +1,5 @@
 // Mobil / WebGL yok: 3D yerine statik sayfa.
+import { lineFor } from './content.js';
 import { openPanel } from './ui/panel.js';
 import { renderContact } from './ui/contact.js';
 
@@ -19,7 +20,6 @@ function el(tag, cls, text) {
 
 export async function initMobile(site, lines, { speak } = {}) {
   document.body.classList.add('ui-mobil');
-  const lineIds = new Set(Array.isArray(lines) ? lines.map((l) => l.id) : Object.keys(lines || {}));
   const lineText = (id) => {
     if (Array.isArray(lines)) { const l = lines.find((x) => x.id === id); return l && l.text; }
     const v = lines && lines[id];
@@ -43,7 +43,7 @@ export async function initMobile(site, lines, { speak } = {}) {
       b.type = 'button';
       b.addEventListener('click', () => {
         openPanel(it, sec);
-        if (typeof speak === 'function') speak(lineIds.has(it.id) ? it.id : sec.id);
+        if (typeof speak === 'function') { const ln = lineFor(it, sec, Array.isArray(lines) ? lines : []); if (ln) speak(ln.id); }
       });
       list.append(b);
     });

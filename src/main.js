@@ -10,7 +10,7 @@ async function main() {
     // 3D hiç başlatılmaz (three bile indirilmez)
     loader.done();
     await initMobile(getSite(), getLines(), {
-      speak: (id) => { try { new Audio(`./assets/voice/${id}.mp3`).play().catch(() => {}); } catch (e) { /* ses yok */ } },
+      speak: (id) => { try { const p = new Audio(`./assets/voice/${id}.mp3`).play(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* ses yok: sessiz kal */ } },
     });
     return;
   }

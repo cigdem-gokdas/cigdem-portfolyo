@@ -146,6 +146,7 @@
     {
       "id": "hackathonlar",
       "type": "hackathon",
+      "line": "hackathon",
       "title": "Hackathonlar",
       "items": [
         {
@@ -184,6 +185,7 @@
     {
       "id": "deneyim",
       "type": "experience",
+      "line": "deneyim",
       "title": "İş Deneyimi",
       "items": [
         {
@@ -229,6 +231,7 @@
     {
       "id": "egitim",
       "type": "education",
+      "line": "egitim",
       "title": "Eğitim",
       "items": [
         {
@@ -278,6 +281,7 @@
     {
       "id": "beceriler",
       "type": "skills",
+      "line": "beceriler",
       "title": "Beceriler",
       "groups": [
         {
@@ -594,6 +598,7 @@
     {
       "id": "diller",
       "type": "other",
+      "line": "dil",
       "title": "Dil Becerileri",
       "items": [
         {
@@ -603,7 +608,8 @@
           "summary": "Dinleme ve okuma C1; konuşma ve yazma B2.",
           "bullets": [],
           "tech": [],
-          "url": null
+          "url": null,
+          "line": "dil"
         }
       ]
     }

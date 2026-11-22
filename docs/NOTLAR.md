@@ -129,3 +129,18 @@ TalkingHead'de bunun için tek hazır "sessiz konuşma" API'si bulunamadı. Çal
    - Bir salınım için `opt.update` kancasında (madde 5) her karede `setValue('jawOpen', 0.3*Math.abs(Math.sin(t)))` çağırmak en basit, dile bağımsız "konuşuyor gibi" görünüm; zamanlama bizim elimizde.
 4. `avatarMute` (speakText seçeneği, TH:2954): yalnız TTS çağrısını atlar; kuyruk öğesi "Only subtitles" dalına düşer, vizemeler zamanlanmaz (hepsi 10 ms aralıkla anında oynar, TH:3464-3475). Sessiz zamanlı lipsync için YETERSİZ.
 5. `speakText` (TTS'siz) mümkün değil: metin dalı Google TTS'e `fetch` yapar (TH:3399) ve hata olursa sonraki öğeye geçer (TH:3456-3459).
+
+---
+
+## Durum (F4)
+
+Şu an KULLANILMAYAN: TalkingHead, HeadAudio. Avatar.js kendi iskelet animasyonunu (Three.js) kullanıyor.
+Neden: mevcut `assets/cigdem.glb`'de morph target yok (docs/LISANS-VE-AVATAR.md A); viseme, jawOpen, HeadAudio çıktısı yazacak hedef yok. Avaturn Type-2 (T-Pose) dışa aktarımı bekleniyor.
+Entegrasyon adımları:
+1. Yeni GLB'de morph adlarını doğrula (`viseme_*`, ARKit `jawOpen` vb.; §7.3) ve göz kemiklerini kontrol et.
+2. TalkingHead dosyalarını kopyala: talkinghead.mjs, retargeter.mjs, dynamicbones.mjs, playback-worklet.js + LICENSE (§6 sonu).
+3. `TalkingHead` oluştur (§1), `showAvatar` (§2); `lipsyncModules: []`.
+4. `Avatar.js` içindeki `TODO(TH)` noktalarını bağla: speak §3 ve §7, jest/bakış §4, kök nesne ve `opt.update` kancası §5.
+5. HeadAudio (isteğe bağlı): 3 dosya (§6 Seçenek A); kurulum §6 madde 1-7. Tek model İngilizce; Türkçe doğruluğu denemeden bilinmez.
+6. Ses yokken konuşma görünümü: sessiz AudioBuffer + viseme dizisi ya da `setValue('jawOpen', ...)` (§7).
+7. `opt.update` yuvası tek: yürüme deltaları ve `headaudio.update` aynı fonksiyonda çağrılmalı (§6 madde 7).

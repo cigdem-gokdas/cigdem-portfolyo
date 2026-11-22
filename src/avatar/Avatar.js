@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 const clamp = THREE.MathUtils.clamp;
 const damp = (v, t, k, dt) => v + (t - v) * (1 - Math.exp(-k * dt));
@@ -66,7 +67,7 @@ export class Avatar {
   }
 
   async load(url, onProgress) {
-    const gltf = await new GLTFLoader().loadAsync(url, (e) => e.total && onProgress?.(e.loaded / e.total));
+    const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(url, (e) => e.total && onProgress?.(e.loaded / e.total));
     const model = gltf.scene;
     // Boyu 1.7 m'ye ölçekle, ayakları yere oturt
     const box = new THREE.Box3().setFromObject(model);

@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { getSite, getLine } from '../content.js';
+import { getSite, getLine, getLines, lineFor as pickLine } from '../content.js';
 import { createRoom } from './room.js';
 import { createStations } from './stations.js';
 import { createSections } from './sections.js';
@@ -143,7 +143,7 @@ export async function start3d() {
   let lastAct = performance.now(), idleCount = 0;
   const touch = () => { lastAct = performance.now(); };
 
-  const lineFor = (e) => getLine(e.item.id) || getLine(e.section.id) || (e.section.id === 'diller' ? getLine('dil') : null);
+  const lineFor = (e) => pickLine(e.item, e.section, getLines());
   const anchorOf = (e) => e.group.getWorldPosition(new THREE.Vector3());
 
   function setCam(f) { target = f; }
