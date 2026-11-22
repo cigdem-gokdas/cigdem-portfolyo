@@ -1,6 +1,6 @@
 # Çiğdem Gökdaş: 3B portfolyo
 
-3B bir odada duran avatar ve istasyonlar (projeler, hackathonlar, deneyim, eğitim, beceri halkası, dil). Bir istasyona tıklayınca avatar oraya yürür, altyazıyla konuşur ve içerik paneli açılır. Derleme adımı, sunucu, API anahtarı ve harici servis yok: statik dosyalar, ES modülleri ve bir importmap. Dar/mobil ekranlarda 3B hiç başlatılmaz, düz liste gösterilir.
+3B bir odada duran avatar ve istasyonlar (projeler, hackathonlar, deneyim, eğitim, havadaki beceri etiketleri, dil). Bir istasyona tıklayınca avatar oraya yürür, altyazıyla konuşur, ekran büyüyerek öne gelir ve içerik ekranda gösterilir (masaüstünde yan panel yok; mobilde panel). Derleme adımı, sunucu, API anahtarı ve harici servis yok: statik dosyalar, ES modülleri ve bir importmap. Dar/mobil ekranlarda 3B hiç başlatılmaz, düz liste gösterilir.
 
 ## Yerelde çalıştırma
 
@@ -45,7 +45,7 @@ Alt yolda çalışmasının nedeni: tüm yollar göreli (`./assets/...`, `./src/
 npx @gltf-transform/cli@4 optimize kaynak.glb assets/cigdem.glb --compress meshopt --texture-compress webp --texture-size 1024 --simplify false --join false --instance false --flatten false --palette false
 ```
 
-  Sonuç 2.18 MB; tarayıcıda MeshoptDecoder ile açılır.
+  Sonuç 1.99 MB; tarayıcıda MeshoptDecoder ile açılır.
 - Sitede GLB için indirme bağlantısı yok. Dosya herkese açık repoda ve sitede teknik olarak yine de erişilebilir. Avaturn kullanım şartları kişisel kullanımla sınırlı olabilir: bkz. `docs/LISANS-VE-AVATAR.md`.
 - Avatar Avaturn T2 dışa aktarımıdır (52 ARKit morph, 15 viseme, göz kemikleri). TalkingHead `avatarOnly` modunda, sesten dudak senkronu için HeadAudio ile kullanılır; ses yokken genel ağız hareketi vardır.
 
@@ -66,5 +66,5 @@ docs/      NOTLAR.md (TalkingHead/HeadAudio API notları), LISANS-VE-AVATAR.md
 src/       main.js, content.js, mobile.js
   scene/   app3d, room, stations, sections, screens, skillRing, dust, reveal
   avatar/  Avatar.js
-  ui/      panel, subtitle, loader, contact, flatList, ui.css
+  ui/      panel (mobil), bigScreen, subtitle, loader, contact, flatList, ui.css
 ```

@@ -5,6 +5,7 @@ const damp = (v, t, k, dt) => v + (t - v) * (1 - Math.exp(-k * dt));
 const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const sm = (t) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
 const AX = new THREE.Vector3(1, 0, 0);
+const AY = new THREE.Vector3(0, 1, 0);
 const qAxis = (axis, a) => new THREE.Quaternion().setFromAxisAngle(axis, a);
 
 const VMAX = 1.8;       // m/s
@@ -77,11 +78,21 @@ export class Avatar {
     arm.traverse((o) => {
       if (o.isMesh) {
         // Gölge: görünmeyecek küçük mesh'ler (göz/kirpik/diş/dil) gölge haritasına girmez (FPS)
-        o.castShadow = !/^(Eye|EyeAO|Eyelash|Teeth|Tongue)_Mesh$/.test(o.name); o.receiveShadow = true; o.frustumCulled = false;
+        o.castShadow = !/^(Eye|EyeAO|Eyelash|Teeth|Tongue|Body)_Mesh$/.test(o.name); // Body: elbisenin hemen altındaki ten, elbiseye gölge düşürüp karın altında koyu leke yapıyordu o.receiveShadow = true; o.frustumCulled = false;
         // Ortam haritası yok; göğüs parlaması metalik/speküler katkıdan geliyordu. Deri/saç/giysi: metalness 0, pürüzlülük dokudan (roughnessMap) ve
         // orijinal faktörden gelir, zorla mat yapılmaz. Göz malzemelerine dokunulmaz (parlaklık istenir).
         if (/^(Eye|EyeAO)_Mesh$/.test(o.name)) { /* göz: olduğu gibi */ } else {
-          for (const m of [].concat(o.material)) if (m && m.isMeshStandardMaterial) { m.metalness = 0; m.metalnessMap = null; m.needsUpdate = true; }
+          for (const m of [].concat(o.material)) if (m && m.isMeshStandardMaterial) {
+            m.metalness = 0; m.metalnessMap = null;
+            // Bloom'dan hariç tutma: avatar çıktısı yumuşak omuzla bloom eşiğinin (0.85) altında tutulur; beyaz elbise/ten patlamaz, detay korunur. Ek render geçişi yok (FPS).
+            m.onBeforeCompile = (sh) => {
+              sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>',
+                `{ float lm = max(max(outgoingLight.r, outgoingLight.g), outgoingLight.b); const float K0 = 0.5, K1 = 0.3;
+                  if (lm > K0) outgoingLight *= (K0 + K1 * (1.0 - exp(-(lm - K0) / K1))) / lm; }
+                #include <opaque_fragment>`);
+            };
+            m.needsUpdate = true;
+          }
         }
       }
       if (o.isBone) this.bones[o.name] = o;
@@ -294,8 +305,8 @@ export class Avatar {
         add(sd + 'Leg', qAxis(AX, flex));
         add(sd + 'Foot', qAxis(AX, (th - flex) * 0.7));
       }
-      add('Hips', e(0, 0.07 * A * Math.sin(p), 0.03 * A * Math.cos(p)));
-      add('Spine1', e(0, -0.05 * A * Math.sin(p), 0));
+      add('Hips', e(0, 0.05 * A * Math.sin(p), 0.014 * A * Math.cos(p)));   // küçük, simetrik kalça dönüşü/yatışı
+      add('Spine1', e(0, -0.035 * A * Math.sin(p), 0));
       const fwdR = -0.3 * A * Math.sin(p), fwdL = 0.3 * A * Math.sin(p);
       if (this.armW < 0.01) {
         add('RightArm', qAxis(AX, -fwdR)); add('RightForeArm', qAxis(AX, -(0.15 * A + 0.35 * Math.max(0, fwdR))));
@@ -307,7 +318,36 @@ export class Avatar {
       this._apply(n, D[n]);
     }
 
+    if (A > 0.004) this._gaitCorrect(A);
+    else this._latBias = null;
+
     if (this.armW > 0.001 || this.fingerW > 0.001) this._applyRightArm();
+  }
+
+  // Yürüyüş düzeltmesi. KÖK NEDEN: TalkingHead 'straight' pozu simetrik değil (sol/sağ ayak dışa 18°/13° açık, ağırlık sol ayakta,
+  // ayak bileği orta noktası ~3 cm yana kaymış) ve bu poz yürürken de aynen yazılıyor; bacak deltalarımız pozun üstüne bindiği için
+  // ayaklar yürüme yönüne bakmıyor, alt gövde yana kayıyor. Çözüm: yürürken ayakların yönü hareket yönüne (hafif dışa) döndürülür,
+  // ayak bileği orta noktası yanal olarak köke ortalanır (düşük geçişli ofset tam, salınımın yarısı kadar bastırılır).
+  _gaitCorrect(A) {
+    const B = this.bones, ry = this.root.rotation.y, w = Math.min(1, A * 1.6);
+    const v = new THREE.Vector3(), u = new THREE.Vector3();
+    for (const sd of ['Left', 'Right']) {
+      const f = B[sd + 'Foot'], t = B[sd + 'ToeBase']; if (!f || !t) continue;
+      f.getWorldPosition(v); t.getWorldPosition(u); u.sub(v);
+      if (Math.hypot(u.x, u.z) < 0.03) continue;
+      const rel = wrapA(Math.atan2(u.x, u.z) - ry);
+      const corr = clamp(this.side[sd] * 0.05 - rel, -0.6, 0.6) * w;
+      this._apply(sd + 'Foot', qAxis(AY, corr));
+    }
+    const hips = B.Hips, lf = B.LeftFoot, rf = B.RightFoot; if (!hips || !lf || !rf) return;
+    const pl = lf.getWorldPosition(new THREE.Vector3()), pr = rf.getWorldPosition(new THREE.Vector3());
+    const lat = new THREE.Vector3(Math.cos(ry), 0, -Math.sin(ry));            // karakterin solu (kök +X)
+    const mid = pl.add(pr).multiplyScalar(0.5).sub(this.root.position).dot(lat);
+    if (this._latBias == null) this._latBias = mid;
+    this._latBias = damp(this._latBias, mid, 1.5, this._dtHook);
+    const shift = -(this._latBias + 0.5 * (mid - this._latBias)) * w;
+    const wd = lat.multiplyScalar(shift).applyQuaternion(this.armature.quaternion.clone().invert()).divideScalar(this.armature.scale.x || 1);
+    hips.position.add(wd);
   }
 
   // Ağız: sesli konuşmada HeadAudio sürer. Sesiz konuşmada (ya da HeadAudio yoksa) dile bağımsız düşük genlikli yumuşak hareket.

@@ -5,7 +5,7 @@ import { VURGU, createScreen, makeEntry, bindPick } from './screens.js';
 const YAY = 110;        // derece
 const YARICAP = 4.2;    // ekran yayı
 const STAND_R = 2.4;    // avatarın duracağı halka yarıçapı (yürüme hedefi)
-const BASE_Y = 2.35;    // ekranlar avatarın başının üstünde kalsın (1440x900 karşılama kadrajında örtüşmesin)
+const BASE_Y = 2.6;     // ekranlar avatarın başının üstünde kalsın; altlarında eğitim çerçevesi/deneyim şeridi için boşluk
 
 // Projeler content/site.json'dan üretilir: yay üzerinde yüzen ince çerçeveli ekranlar.
 // Tıklanabilir yüzeyler yalnızca ekran yüzü + çerçeve (bindPick); başka görünmez hitbox yok.

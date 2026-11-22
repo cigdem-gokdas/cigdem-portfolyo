@@ -8,17 +8,37 @@ function emissiveMat(intensity = 1.2) {
   return new THREE.MeshStandardMaterial({ color: 0x0a1218, emissive: CYAN, emissiveIntensity: intensity, roughness: 0.5 });
 }
 
-// Eğitim şeridi dokusu: koyu zemin, vurgu çizgisi, başlık (content'ten)
-function stripTexture(item, i) {
+// Eğitim şeridi dokusu: koyu zemin, vurgu çizgisi, başlık (content'ten). Ana görünümde uzaktan okunsun diye büyük punto:
+// başlık virgülden bölünür; ilk parça (program) büyük, ikinci parça (kurum) altında küçük. Sığmazsa punto küçülür.
+function fitLines(g, text, maxW, font0, minFont, maxLines, weight) {
+  for (let f = font0; f >= minFont; f -= 4) {
+    g.font = `${weight} ${f}px Inter, system-ui, sans-serif`;
+    const words = text.split(' '), lines = []; let line = '';
+    for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+    if (line) lines.push(line);
+    if (lines.length <= maxLines && lines.every((l) => g.measureText(l).width <= maxW)) return { f, lines };
+  }
+  g.font = `${weight} ${minFont}px Inter, system-ui, sans-serif`;
+  return { f: minFont, lines: [text] };
+}
+function stripTexture(item) {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 524;
   const g = c.getContext('2d');
   g.fillStyle = '#121826'; g.fillRect(0, 0, 1024, 524);
-  g.fillStyle = VURGU; g.fillRect(48, 56, 96, 8);
-  g.font = '600 34px Inter, system-ui, sans-serif';
-  g.fillText(String(i + 1).padStart(2, '0'), 48, 120);
-  g.fillStyle = '#f7f9fc'; g.font = '600 58px Inter, system-ui, sans-serif';
-  wrap(g, item.title, 48, 210, 930, 72, 4);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  g.fillStyle = VURGU; g.fillRect(48, 44, 120, 10);
+  const i = item.title.indexOf(',');
+  const main = i > 0 ? item.title.slice(0, i).trim() : item.title, sub = i > 0 ? item.title.slice(i + 1).trim() : '';
+  g.textBaseline = 'alphabetic';
+  const a = fitLines(g, main, 930, 112, 56, 2, 700);
+  let y = 150 + a.f * 0.55;
+  g.fillStyle = '#f7f9fc'; g.font = `700 ${a.f}px Inter, system-ui, sans-serif`;
+  for (const l of a.lines) { g.fillText(l, 48, y); y += a.f * 1.08; }
+  if (sub) {
+    const b = fitLines(g, sub, 930, 72, 40, 2, 500);
+    y += 14; g.fillStyle = '#b4bccc'; g.font = `500 ${b.f}px Inter, system-ui, sans-serif`;
+    for (const l of b.lines) { g.fillText(l, 48, y); y += b.f * 1.15; }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return t;
 }
 
@@ -55,16 +75,16 @@ export function createSections() {
 
   // --- Deneyim şeridi: sağ yanda zemine uzanan ışık çizgisi + 3 nokta + küçük etiket ---
   const xs = getSection('deneyim');
-  const SX = 3.3;
+  const SY0 = 1.6, SY1 = 3.4, SZ = -3.6;   // deneyim şeridi: derinlik yerine yanlamasına (etiketler üst üste binmesin), eğitim çerçevesinin arkasında
   const lineMat = new THREE.MeshBasicMaterial({ color: CYAN.clone().multiplyScalar(1.4), toneMapped: false });
-  const line = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 3.8), lineMat);
-  line.position.set(SX, 0.02, -1.7);
+  const line = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.012, 0.04), lineMat);
+  line.position.set((SY0 + SY1) / 2, 0.02, SZ);
   root.add(line);
   const sphereGeo = new THREE.SphereGeometry(0.17, 20, 14);
   const postGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.55, 8);
-  const zs = [-0.7, -1.8, -2.9];
+  const xsPos = [SY0, (SY0 + SY1) / 2, SY1];
   xs.items.forEach((item, i) => {
-    const z = zs[i] ?? -0.7 - i * 1.1;
+    const SX = xsPos[i] ?? SY0 + i, z = SZ;
     const mat = emissiveMat(1.3);
     const post = new THREE.Mesh(postGeo, mat); post.position.set(SX, 0.28, z);
     const ball = new THREE.Mesh(sphereGeo, mat); ball.position.set(SX, 0.7, z);
@@ -74,32 +94,32 @@ export function createSections() {
     const { dir, stand } = standFor(SX, z, 1.5);
     const e = makeEntry({
       kind: 'exp', id: item.id, item, section: xs, group: ball, standPoint: stand, dir, index: i,
-      stripStart: new THREE.Vector3(SX, 0.03, 0.15), post, ball,
+      stripStart: new THREE.Vector3(SY0 - 0.6, 0.03, SZ), post, ball,
       mats: [{ mat, base: 1.3, hov: 1.6 }],
     });
     bindPick(e, ball, label);
     entries.push(e);
   });
   const xCap = labelSprite(xs.title, { w: 0.9, color: VURGU, opacity: 0.8 });
-  xCap.position.set(SX, 1.5, -1.8); root.add(xCap);
+  xCap.position.set((SY0 + SY1) / 2, 1.5, SZ); root.add(xCap);
 
   // --- Eğitim: tek dikey çerçeve içinde 3 yatay şerit (her biri bir madde) + altında dil plakası ---
   const es = getSection('egitim');
-  const FX = 3.7, FZ = -6.0, FY = 1.08; // sağ duvara yakın kendi boşluğu: yaydan ve deneyim şeridinden ayrı
+  const FX = 3.7, FZ = -1.9, FY = 1.35, ES = 0.95; // ana görünümde avatarın sağ-önü: yay ekranlarının ve deneyim şeridinin ekran-uzayı dışında, alt kenar ~1.05 m
   const eduG = new THREE.Group();
   eduG.position.set(FX, 0, FZ);
   eduG.lookAt(0, 0, 4.5);
-  eduG.scale.setScalar(0.72);
+  eduG.scale.setScalar(ES);
   root.add(eduG);
   const frameMat = emissiveMat(0.7);
   const frame = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.6, 0.03), frameMat);
   frame.position.set(0, FY, 0);
   eduG.add(frame);
-  const { dir: eDir, stand: eStand } = standFor(FX, FZ, 2.8);
+  const { dir: eDir, stand: eStand } = standFor(FX, FZ, 2.2);
   const stripGeo = planeGeo(0.9, 0.46);
   const eduEntries = [];
   es.items.forEach((item, i) => {
-    const mat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: stripTexture(item, i), emissiveIntensity: 1.1 });
+    const mat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: stripTexture(item), emissiveIntensity: 1.1 });
     const m = new THREE.Mesh(stripGeo, mat);
     m.position.set(0, FY + 0.52 - i * 0.52, 0.02);
     eduG.add(m);
@@ -112,14 +132,14 @@ export function createSections() {
   });
   bindPick(eduEntries[0], frame); // çerçeve kenarı: ilk maddeyi açar
   const eCap = labelSprite(es.title, { w: 0.9, color: VURGU, opacity: 0.8 });
-  eCap.position.set(0, FY + 1.05, 0); eduG.add(eCap);
+  eCap.position.set(0, 0.075, 0.01); eduG.add(eCap);
 
   // Dil bilgisi: çerçevenin altında küçük plaka
   const ds = getSection('diller');
   const dItem = ds.items[0];
   const dl = createScreen(dItem, 0);
   dl.group.scale.setScalar(0.5);
-  dl.group.position.set(0, 0.1, 0.01);
+  dl.group.position.set(0, 0.32, 0.01);
   eduG.add(dl.group);
   const le = makeEntry({
     kind: 'lang', id: dItem.id, item: dItem, section: ds, group: dl.group, standPoint: eStand, dir: eDir, frameGroup: eduG,

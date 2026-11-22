@@ -15,11 +15,13 @@ import { Avatar } from '../avatar/Avatar.js';
 import { subtitle } from '../ui/subtitle.js';
 import { loader } from '../ui/loader.js';
 import { openPanel, closePanel, onPanelClose, isPanelOpen } from '../ui/panel.js';
+import { bigScreen } from '../ui/bigScreen.js';
 import { initFlatList } from '../ui/flatList.js';
 import { initContactCorner } from '../ui/contact.js';
 
 const BASE_FOV = 50;
 const FOCUS_FOV = 40;
+const AV_NDC = 0.66;     // büyük ekran açıkken avatarın kadraj konumu (NDC, sol)
 const Y = new THREE.Vector3(0, 1, 0);
 const damp = (v, t, k, dt) => v + (t - v) * (1 - Math.exp(-k * dt));
 
@@ -64,7 +66,7 @@ export async function start3d() {
   const reveal = createReveal({ scene, room, dust, skills, getEntries: () => entries, sprites: (() => { const l = []; for (const r of [stationRoot, secRoot]) r.traverse((o) => { if (o.isSprite) l.push(o); }); return l; })() });
 
   // Avatarı izleyen yumuşak dolgu ışığı: sahne kararırken (efekt) avatar siyah siluet olmasın; kararmadan etkilenmez
-  const fill = new THREE.PointLight(0xffe9dc, 10, 5, 2);
+  const fill = new THREE.PointLight(0xffe9dc, 7, 5, 2);
   scene.add(fill);
   const tmpV = new THREE.Vector3();
 
@@ -142,7 +144,7 @@ export async function start3d() {
   });
 
   // ---- Akış durumu ----
-  let busy = false, active = null, closing = Promise.resolve(), openP = null;
+  let busy = false, active = null, closing = Promise.resolve(), openP = null, pendingClose = false;
   let lastAct = performance.now(), idleCount = 0;
   const touch = () => { lastAct = performance.now(); };
 
@@ -153,7 +155,8 @@ export async function start3d() {
   function resetCam() { target = { ...HOME }; }
 
   // Seçilen noktanın kadrajı. Beceri: avatar önden. Diğerleri: kamera avatarın SAĞINDA (işaret eden kol tarafı), hafif önden
-  // (3/4 profil); avatar kadrajın solunda (panel sağda), açılan ekran onun yanında. Duvarın dışına çıkmamak için mesafe kısılır.
+  // (3/4 profil); avatar kadrajın solunda (NDC ~ -0.66), büyük ekran (genişliğin ~%62'si) ortanın biraz sağında. Panel yok.
+  // Duvarın dışına çıkmamak için mesafe kısılır.
   function framingFor(entry) {
     if (entry.kind === 'skill') {
       const S = avatar.root.position.clone(), DIST = 4.6;
@@ -162,7 +165,7 @@ export async function start3d() {
       const fwd = look0.clone().sub(pos).setY(0).normalize();
       const right = new THREE.Vector3().crossVectors(fwd, Y).normalize();
       const half = Math.tan(THREE.MathUtils.degToRad(FOCUS_FOV) / 2) * camera.aspect * DIST;
-      return { pos, look: look0.addScaledVector(right, half * 0.76), fov: FOCUS_FOV, dist: DIST };
+      return { pos, look: look0.addScaledVector(right, half * AV_NDC), fov: FOCUS_FOV, dist: DIST };
     }
     const S = entry.standPoint.clone();
     const f = anchorOf(entry).sub(S).setY(0).normalize();
@@ -192,14 +195,14 @@ export async function start3d() {
     const fwd = look0.clone().sub(pos).setY(0).normalize();
     const vr = new THREE.Vector3().crossVectors(fwd, Y).normalize();
     const half = Math.tan(THREE.MathUtils.degToRad(FOCUS_FOV) / 2) * camera.aspect * DIST;
-    return { pos, look: look0.addScaledVector(vr, half * 0.6), fov: FOCUS_FOV, dist: DIST };
+    return { pos, look: look0.addScaledVector(vr, half * AV_NDC), fov: FOCUS_FOV, dist: DIST };
   }
 
   async function activate(entry) {
     if (busy) return;          // animasyon sürerken yeni tıklama yok sayılır
     busy = true; touch();
     try {
-      if (isPanelOpen()) closePanel();   // önce kapanış (onPanelClose eşzamanlı çalışır)
+      if (isPanelOpen()) closePanel();   // düz listeden açılan panel varsa önce kapanış (onPanelClose eşzamanlı çalışır)
       await closing;
       active = entry;
       avatar.lookAtPoint(null);
@@ -208,9 +211,10 @@ export async function start3d() {
         const fr = framingFor(entry); setCam(fr); parallaxK = 0.3;
         avatar.faceTowards(camera.position);
         const sp = avatar.speak(line);
+        bigScreen.show(entry.item, entry.section);
         openP = reveal.open(entry, fr, camera.aspect);
-        openPanel(entry.item, entry.section);   // skills tipinde panel (section.groups)
         await openP;
+        bigScreen.ready();
         return;
       }
       await avatar.walkTo(entry.standPoint);
@@ -219,14 +223,19 @@ export async function start3d() {
       const fr = framingFor(entry); setCam(fr); parallaxK = 0.3;
       const sp = avatar.speak(line);
       openP = reveal.open(entry, fr, camera.aspect);
-      avatar.point(() => reveal.cloneCenter() || anchor, { holdUntil: sp }); // hedef: uçan/açılmış ekran klonu
-      openPanel(entry.item, entry.section);
+      avatar.point(() => reveal.pointTarget() || anchor, { holdUntil: sp }); // hedef: uçan/açılmış ekran klonu
+      bigScreen.show(entry.item, entry.section);
       await openP;
+      bigScreen.ready();
     } catch (e) { console.error(e); }
-    finally { busy = false; }
+    finally {
+      busy = false;
+      if (pendingClose) { pendingClose = false; requestClose(); }
+    }
   }
 
-  onPanelClose(() => {
+  // Kapanış: ekranlar ters sırayla, avatar eve döner (Kapat düğmesi, Esc, ekran dışına tıklama, düz liste paneli kapanışı)
+  function runClose() {
     const own = !busy; busy = true;
     const e = active; active = null;
     closing = (async () => {
@@ -240,9 +249,31 @@ export async function start3d() {
       } catch (err) { console.error(err); }
       finally { if (own) busy = false; }
     })();
-  });
+  }
+  function requestClose() {
+    if (!bigScreen.isOpen) return;
+    if (busy) { pendingClose = true; return; }   // açılış sürüyor: bitince kapanır
+    bigScreen.hide();
+    runClose();
+  }
+  bigScreen.onClose(requestClose);
+  onPanelClose(() => { if (!bigScreen.isOpen) runClose(); });
+
+  // Büyük ekranın ekrandaki dörtgeni (piksel): dışına tıklama = kapat
+  const toPx = (v) => { v.project(camera); return { x: (v.x * 0.5 + 0.5) * innerWidth, y: (-v.y * 0.5 + 0.5) * innerHeight }; };
+  function insideScreen(x, y) {
+    const q = reveal.screenQuad(); if (!q) return false;
+    const pts = q.map((v) => toPx(v.clone()));
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+    return x >= Math.min(...xs) && x <= Math.max(...xs) && y >= Math.min(...ys) && y <= Math.max(...ys);
+  }
 
   canvas.addEventListener('click', (ev) => {
+    if (bigScreen.isOpen) {
+      touch();
+      if (!busy && !insideScreen(ev.clientX, ev.clientY)) requestClose();   // yalnız boş alan; açılış sürerken yok sayılır
+      return;
+    }
     const h = pickAt(ev.clientX, ev.clientY);
     if (!h) return;
     touch();
@@ -280,21 +311,31 @@ export async function start3d() {
     if (hit !== hovered && !(hit && hovered && hit.kind === 'avatar' && hovered.kind === 'avatar')) {
       hovered = hit;
       canvas.style.cursor = hit ? 'pointer' : 'default';
-      if (!busy && !active && avatar.state === 'idle') avatar.lookAtPoint(hit && hit.group ? hit.group.getWorldPosition(new THREE.Vector3()) : null);
+      if (!busy && !active && avatar.state === 'idle') avatar.lookAtPoint(hit && hit.group ? (hit.kind === 'skill' ? skills.localToWorld(skills.userData.center.clone()) : hit.group.getWorldPosition(new THREE.Vector3())) : null);
     }
 
     updateEntries(entries, dt, t, hovered && hovered.kind !== 'avatar' ? hovered : null);
     dust.userData.update(dt, t);
-    skills.position.x = damp(skills.position.x, avatar.root.position.x, 4, dt);
-    skills.position.z = damp(skills.position.z, avatar.root.position.z, 4, dt);
-    if (!poster) skills.userData.update(dt, camera);
+    if (!poster) skills.userData.update(dt, camera, t);
     reveal.update(dt, t, mouse);
-    tmpV.copy(camera.position).sub(avatar.root.position).setY(0).normalize().multiplyScalar(1.6).add(avatar.root.position); tmpV.y = 1.7; fill.position.copy(tmpV);
+    // Gerçek <a>: 3D "Projeyi aç" düğmesinin 4 köşesi bu karenin kamerasıyla ekrana izdüşürülür, bağlantı tam üstüne oturur
+    if (bigScreen.isOpen) {
+      camera.updateMatrixWorld(true);
+      const q = reveal.linkQuad();
+      let r = null;
+      if (q) {
+        const p = q.map((v) => toPx(v.clone()));
+        const x0 = Math.min(...p.map((a) => a.x)), x1 = Math.max(...p.map((a) => a.x)), y0 = Math.min(...p.map((a) => a.y)), y1 = Math.max(...p.map((a) => a.y));
+        r = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+      }
+      bigScreen.setLinkRect(r);
+    }
+    tmpV.copy(camera.position).sub(avatar.root.position).setY(0).normalize().multiplyScalar(1.8).add(avatar.root.position); tmpV.y = 1.25; fill.position.copy(tmpV);
     avatar.idleTarget.copy(camera.position);
     avatar.update(dt);
 
     // Boşta: 25 s etkileşim yoksa ve panel kapalıysa bir kez konuş (sayfa başına en çok 2)
-    if (!busy && !active && !isPanelOpen() && idleCount < 2 && performance.now() - lastAct > 25000 && avatar.state === 'idle') {
+    if (!busy && !active && !isPanelOpen() && !bigScreen.isOpen && idleCount < 2 && performance.now() - lastAct > 25000 && avatar.state === 'idle') {
       idleCount++; lastAct = performance.now();
       avatar.speak(getLine('bosta'));
     }
@@ -306,5 +347,7 @@ export async function start3d() {
   // Karşılama: 600 ms sonra (altyazı; ses ilk tıklamadan sonra denenir)
   setTimeout(() => { touch(); avatar.speak(getLine('karsilama')); }, 600);
 
-  window.__portfolyo = { composer, avatar, scene, camera, entries, reveal, activate, renderer, pickAt, posterMode, skills };
+  // Test/ölçüm kancası: kamerayı anında konumla (parallax kapalı)
+  const camSnap = (pos, look, fov = BASE_FOV) => { target = { pos: new THREE.Vector3(...pos), look: new THREE.Vector3(...look), fov }; parallaxK = 0; camPos.copy(target.pos); camLook.copy(target.look); camFov = fov; camera.fov = fov; camera.updateProjectionMatrix(); };
+  window.__portfolyo = { bigScreen, requestClose, camSnap, composer, avatar, scene, camera, entries, reveal, activate, renderer, pickAt, posterMode, skills };
 }

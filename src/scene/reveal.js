@@ -1,11 +1,15 @@
 import * as THREE from 'three';
-import { VURGU, SW, SH, createScreen, planeGeo, wrap, faceTexture } from './screens.js';
+import { VURGU, SW, SH, createScreen, planeGeo, faceTexture } from './screens.js';
+import { CW, CH, layoutScreen, drawLayer } from './screenLayout.js';
 
-// 3D AÇILIŞ EFEKTİ: seçilen ekranın klonu yayından kopar, kameranın önüne uçar (1 tur döner, büyür),
-// üstünde 4 parallax katmanı belirir: çerçeve ışığı, başlık, özet, "Projeyi aç" şeridi.
+// 3D AÇILIŞ EFEKTİ: seçilen ekranın klonu yayından kopar, kameranın önüne uçar (1 tur döner, büyür) ve BÜYÜK EKRAN olur
+// (kadrajda genişliğin ~%62'si, ortanın biraz sağında; avatar solda). Üstünde parallax katmanları sırayla belirir:
+// çerçeve ışığı, başlık bloğu, özet/maddeler, teknolojiler, "Projeyi aç" düğmesi (screenLayout.js).
 // Diğer ekranlar/ışık kısılır, toz ekrana doğru akar. Kapanışta ters sıra. Bölüme göre varyantlar (open içinde).
+// Düğmenin gerçek tıklaması HTML <a> ile yapılır (ui/bigScreen.js); burada yalnız düğmenin dünya köşeleri verilir (linkQuad).
 const CYAN = new THREE.Color(VURGU);
-const LABEL_OPEN = 'Projeyi aç'; // arayüz etiketi (panel.js ile aynı)
+const LZ = { border: 0.03, head: 0.04, body: 0.05, tech: 0.06, btn: 0.07 };   // katman derinlikleri (yerel)
+const FRAC_W = 0.62, CENTER_NX = 0.2, CENTER_NY = 0.0, MAX_H = 0.74;       // büyük ekranın kadraj payı
 const FLY = 0.9;
 
 const easeOutCubic = (k) => 1 - Math.pow(1 - k, 3);
@@ -17,7 +21,7 @@ const Y = new THREE.Vector3(0, 1, 0);
 // Çerçeve ışığı + koyu dolgu katmanı: çevre boyunca ilerleyen ışık çizgisi (shader)
 function borderMaterial() {
   return new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, toneMapped: false,
+    transparent: true, depthWrite: false, depthTest: false, toneMapped: false,
     uniforms: { uProg: { value: 0 }, uFill: { value: 0 }, uColor: { value: new THREE.Vector3(CYAN.r, CYAN.g, CYAN.b) }, uAspect: { value: SW / SH } },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `varying vec2 vUv; uniform float uProg, uFill, uAspect; uniform vec3 uColor;
@@ -37,15 +41,6 @@ function borderMaterial() {
   });
 }
 
-function textLayerTexture(draw) {
-  const c = document.createElement('canvas'); c.width = 1280; c.height = 800;
-  const g = c.getContext('2d');
-  g.textBaseline = 'alphabetic';
-  draw(g);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
-  return t;
-}
-
 export function createReveal({ scene, room, dust, skills, getEntries, sprites = [] }) {
   sprites.forEach((o) => { o.userData.o0 = o.material.opacity; });
   let labelK = 1;
@@ -63,49 +58,37 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
     return fr.pos.clone().addScaledVector(fwd, depth).addScaledVector(right, nx * th * aspect * depth).addScaledVector(up, ny * th * depth);
   }
 
-  function makeLayers(item, hasUrl) {
+  function makeLayers(item, section, hasUrl) {
     const geo = planeGeo(SW, SH);
+    const layout = layoutScreen(item, section, hasUrl);
     const layers = [];
-    const mk = (tex, z) => {
-      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
-      m.userData.z = z; m.position.z = z + 0.06; m.renderOrder = 5; m.material.color.setScalar(0.8);
-      return m;
-    };
     const border = new THREE.Mesh(geo, borderMaterial());
-    border.userData.z = 0.04; border.position.z = 0.04; border.renderOrder = 4;
-    const title = mk(textLayerTexture((g) => {
-      g.fillStyle = VURGU; g.fillRect(96, 110, 120, 8);
-      g.fillStyle = '#f7f9fc'; g.font = '600 88px Inter, system-ui, sans-serif';
-      wrap(g, item.title, 96, 240, 1090, 102, 3);
-    }), 0.07);
-    const sum = mk(textLayerTexture((g) => {
-      g.fillStyle = '#b4bccc'; g.font = '400 52px Inter, system-ui, sans-serif';
-      wrap(g, item.summary || item.meta || '', 96, 575, 1090, 68, 3);
-    }), 0.10);
-    layers.push(border, title, sum);
-    if (hasUrl) {
-      const strip = mk(textLayerTexture((g) => {
-        g.fillStyle = VURGU; g.fillRect(96, 676, 1090, 84);
-        g.fillStyle = '#07090f'; g.font = '600 44px Inter, system-ui, sans-serif'; g.textBaseline = 'middle';
-        g.fillText(LABEL_OPEN, 130, 719);
-      }), 0.13);
-      layers.push(strip);
+    border.userData.z = LZ.border; border.position.z = LZ.border; border.renderOrder = 4;
+    layers.push(border);
+    for (const name of ['head', 'body', 'tech', 'btn']) {
+      const cv = drawLayer(layout, name); if (!cv) continue;
+      const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, depthTest: false, toneMapped: false }));
+      m.userData.z = LZ[name]; m.position.z = LZ[name] + 0.03; m.renderOrder = 5; m.material.color.setScalar(0.9);
+      layers.push(m);
     }
-    return layers;
+    return { layers, button: layout.button, fit: { scale: layout.scale, bottom: layout.bottom } };
   }
 
   function setLayerOpacity(m, o, k) {
-    m.material.opacity = o; m.position.z = m.userData.z + (1 - k) * 0.06;
+    m.material.opacity = o; m.position.z = m.userData.z + (1 - k) * 0.03;
   }
 
   // Klon başlangıcı: entry türüne göre
   function spawn(entry) {
     const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
-    if (entry.kind === 'exp' || entry.kind === 'edu') {
+    if (entry.kind === 'skill') {
+      skills.localToWorld(p.copy(skills.userData.center)); s.setScalar(0.3); q.identity();
+    } else if (entry.kind === 'exp' || entry.kind === 'edu') {
       entry.group.updateWorldMatrix(true, false);
       entry.group.getWorldPosition(p);
       if (entry.kind === 'exp') { p.y += 0.25; s.setScalar(0.12); q.identity(); }
-      else { entry.group.getWorldQuaternion(q); s.setScalar(0.4); p.addScaledVector(new THREE.Vector3(0, 0, 1).applyQuaternion(q), 0.05); }
+      else { entry.group.getWorldQuaternion(q); s.setScalar(0.45); p.addScaledVector(new THREE.Vector3(0, 0, 1).applyQuaternion(q), 0.05); }
     } else {
       entry.group.updateWorldMatrix(true, false);
       entry.group.matrixWorld.decompose(p, q, s);
@@ -118,14 +101,7 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
     const c = { entry, tl: [], clone: null, layers: [], idle: false, open: null };
     cur = c;
     dimOthers(entry, true);
-    skills.userData.setHidden(entry.kind !== 'skill'); // efekt boyunca beceri halkası solar (250 ms)
-    if (entry.kind === 'skill') {
-      skills.userData.setExploded(true);
-      const ctr = new THREE.Vector3(); skills.getWorldPosition(ctr); ctr.y += 1.2;
-      dust.userData.attract(ctr, 1.5);
-      c.open = tween(1.2, () => {});
-      await c.open; c.idle = true; return;
-    }
+    skills.userData.setHidden(true); // büyük ekran boyunca beceri takımyıldızı solar (250 ms)
 
     // Varyant ön efektleri
     let delay = 0;
@@ -143,26 +119,32 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
     }
 
     const sp = spawn(entry);
-    // Yerleşim: avatar kadrajın solunda, klon onun yanında; panel (sağda 440 px) payı dışarıda bırakılır
-    const depth = fr.dist * 0.9, th = Math.tan(THREE.MathUtils.degToRad(fr.fov) / 2);
-    const freeR = 2 * (innerWidth - 440) / innerWidth - 1 - 0.03, freeL = -0.34;
-    const maxScale = ((freeR - freeL) / 2) * depth * th * aspect * 2 / SW;
-    const endScale = Math.min(1.2, maxScale);
-    const ep = framePoint(fr, aspect, (freeL + freeR) / 2, 0.16, depth);
+    // Yerleşim: ekran kadrajın ~%62'sini kaplar, ortanın biraz sağında; avatar solda. Ekran görüntü düzlemine paralel (çarpıtma yok).
+    const th = Math.tan(THREE.MathUtils.degToRad(fr.fov) / 2), depth = fr.dist * 0.9;
+    const visW = 2 * depth * th * aspect, visH = 2 * depth * th;
+    let wWorld = FRAC_W * visW;
+    if (wWorld / (SW / SH) > MAX_H * visH) wWorld = MAX_H * visH * (SW / SH);
+    const f = wWorld / visW;                      // ekranın kadraj genişlik oranı (NDC yarı genişlik)
+    const nx = Math.min(CENTER_NX, 0.94 - f);
+    const endScale = wWorld / SW;
+    const ep = framePoint(fr, aspect, nx, CENTER_NY, depth);
     c.endScale = endScale;
-    tmp.position.copy(ep); tmp.lookAt(fr.pos);
+    const fwdV = fr.look.clone().sub(fr.pos).normalize();
+    tmp.position.copy(ep); tmp.lookAt(ep.clone().sub(fwdV));
     const eq = tmp.quaternion.clone();
     const ct = createScreen(entry.item, entry.index ?? 0, { blank: true }); // yüz boş: içerik yalnızca katmanlardan
     // Şeffaf + yüksek renderOrder: ekranın önüne hiçbir sprite/etiket/toz çizilmez (onlar renderOrder 0, önce çizilir)
-    for (const m of [ct.frame, ct.screen]) { m.material.transparent = true; m.renderOrder = 3; }
+    // depthTest kapalı: ekran, sahnedeki daha yakın nesneler (eğitim çerçevesi, toplar, yay ekranları) tarafından kesilmesin
+    for (const m of [ct.frame, ct.screen]) { m.material.transparent = true; m.material.depthTest = false; m.renderOrder = 3; }
     // Uçuşun başında özgün yüzün solması (anî değişim olmasın)
-    const faceMesh = new THREE.Mesh(planeGeo(SW, SH), new THREE.MeshBasicMaterial({ map: faceTexture(entry.item, entry.index ?? 0), transparent: true, depthWrite: false, toneMapped: false }));
+    const faceMesh = new THREE.Mesh(planeGeo(SW, SH), new THREE.MeshBasicMaterial({ map: faceTexture(entry.item, entry.index ?? 0), transparent: true, depthWrite: false, depthTest: false, toneMapped: false }));
     faceMesh.position.z = 0.03; faceMesh.renderOrder = 4; ct.group.add(faceMesh);
     tween(0.35, (k) => { faceMesh.material.opacity = 1 - k; }, { delay: delay + 0.05 }).then(() => { ct.group.remove(faceMesh); faceMesh.material.dispose(); });
     ct.group.position.copy(sp.p); ct.group.quaternion.copy(sp.q); ct.group.scale.setScalar(sp.s);
     scene.add(ct.group);
     c.clone = ct; c.sp = sp; c.ep = ep; c.eq = eq;
-    c.layers = makeLayers(entry.item, !!entry.item.url);
+    const mk = makeLayers(entry.item, entry.section, !!entry.item.url);
+    c.layers = mk.layers; c.button = mk.button; c.fit = mk.fit;
     c.layers.forEach((m) => { m.visible = true; ct.group.add(m); });
     c.layers[0].material.uniforms.uProg.value = 0;
     dust.userData.attract(ep, 1.5);
@@ -182,7 +164,7 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
     const u = border.material.uniforms;
     tween(0.6, (k) => { u.uProg.value = k; }, { delay: L0, ease: easeInOutCubic });
     tween(0.4, (k) => { u.uFill.value = 0.93 * k; ct.mat.emissiveIntensity = lerp(1.15, 0.08, k); }, { delay: L0 + 0.15 });
-    const ends = rest.map((m, i) => tween(0.28, (k) => { setLayerOpacity(m, k, easeOutCubic(k)); }, { delay: L0 + 0.12 * (i + 1) }));
+    const ends = rest.map((m, i) => tween(0.26, (k) => { setLayerOpacity(m, k, easeOutCubic(k)); }, { delay: L0 + 0.11 * (i + 1) }));
     c.open = Promise.all([fly, ...ends]);
     await c.open;
     c.idle = true;
@@ -209,13 +191,7 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
     cur = null;
     if (c.open) await c.open;
     c.idle = false;
-    if (c.entry.kind === 'skill') {
-      skills.userData.setExploded(false);
-      dimOthers(c.entry, false);
-      await tween(0.6, () => {});
-      return;
-    }
-    // Ters sıra: şerit, özet, başlık, çerçeve; sonra klon yerine uçar
+    // Ters sıra: düğme, teknolojiler, özet, başlık, çerçeve; sonra klon yerine uçar
     const rest = c.layers.slice(1).reverse();
     const outs = rest.map((m, i) => tween(0.18, (k) => setLayerOpacity(m, 1 - k, 1 - k), { delay: 0.1 * i }));
     const u = c.layers[0].material.uniforms;
@@ -225,12 +201,12 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
     await Promise.all(outs);
     c.layers.forEach((m) => { c.clone.group.remove(m); m.material.map?.dispose(); m.material.dispose(); });
     dimOthers(c.entry, false); // ışık ve ekranlar geri gelir
-    skills.userData.setHidden(false); // beceri halkası geri solar
+    skills.userData.setHidden(false); // beceri takımyıldızı geri solar
     // Klon yerine uçar (ters: geri dönerken ters yönde 1 tur)
     const cp = c.clone.group;
     const fp = cp.position.clone(), fq = cp.quaternion.clone(), fs = cp.scale.x;
     const spin = new THREE.Quaternion();
-    const fm = new THREE.Mesh(planeGeo(SW, SH), new THREE.MeshBasicMaterial({ map: faceTexture(c.entry.item, c.entry.index ?? 0), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+    const fm = new THREE.Mesh(planeGeo(SW, SH), new THREE.MeshBasicMaterial({ map: faceTexture(c.entry.item, c.entry.index ?? 0), transparent: true, opacity: 0, depthWrite: false, depthTest: false, toneMapped: false }));
     fm.position.z = 0.03; fm.renderOrder = 4; cp.add(fm);
     tween(0.4, (k) => { fm.material.opacity = k; }, { delay: 0.25 });
     await tween(0.7, (k) => {
@@ -254,10 +230,10 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
       if (k >= 1) { tw.splice(i, 1); a.res(); }
     }
     // Sahne etiketleri (bölüm başlıkları, şirket adları) efekt boyunca solar: ekranın/avatarın önüne düşmesin
-    labelK += ((cur && cur.entry.kind !== 'skill' ? 0 : 1) - labelK) * (1 - Math.exp(-8 * dt));
+    labelK += ((cur ? 0 : 1) - labelK) * (1 - Math.exp(-8 * dt));
     for (const o of sprites) o.material.opacity = o.userData.o0 * labelK;
     // Deneyim topları/direkleri (seçili olan hariç) efekt boyunca küçülür: kameranın önüne büyük küre gelmesin
-    const shrink = cur && cur.entry.kind !== 'skill';
+    const shrink = !!cur;
     for (const e of getEntries()) if (e.kind === 'exp') {
       const k = Math.max(0.001, shrink && cur.entry !== e ? labelK : 1);
       e.ball.scale.setScalar(k); e.post.scale.setScalar(k);
@@ -269,9 +245,31 @@ export function createReveal({ scene, room, dust, skills, getEntries, sprites = 
     if (cur && cur.idle && cur.clone) {
       const g = cur.clone.group;
       g.position.copy(cur.ep); g.position.y += Math.sin(t * 1.2) * 0.025;
-      g.quaternion.copy(cur.eq).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-mouse.y * 0.05, Math.sin(t * 0.5) * 0.06 + mouse.x * 0.08, 0)));
+      g.quaternion.copy(cur.eq).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-mouse.y * 0.025, Math.sin(t * 0.5) * 0.02 + mouse.x * 0.035, 0)));
     }
   }
 
-  return { open, close, update, cloneCenter: () => (cur && cur.clone && cur.entry.kind !== 'skill' ? cur.clone.group.position : null), get active() { return cur; } };
+  // "Projeyi aç" düğmesinin 4 köşesi (dünya); yalnız ekran tamamen açıkken (idle). HTML <a> bunun ekran izdüşümüne oturur.
+  function linkQuad() {
+    if (!cur || !cur.idle || !cur.clone || !cur.button) return null;
+    const g = cur.clone.group, b = cur.button, z = LZ.btn;
+    g.updateMatrixWorld(true);
+    const P = (px, py) => new THREE.Vector3((px / CW - 0.5) * SW, (0.5 - py / CH) * SH, z).applyMatrix4(g.matrixWorld);
+    return [P(b.x, b.y), P(b.x + b.w, b.y), P(b.x + b.w, b.y + b.h), P(b.x, b.y + b.h)];
+  }
+  // İşaret hedefi: klonun SOL kenarının ortası (ekran avatara göre kameraya daha yakın; elin ekranın arkasında kalmaması için kenara işaret edilir)
+  function pointTarget() {
+    if (!cur || !cur.clone) return null;
+    const g = cur.clone.group;
+    return g.position.clone().addScaledVector(new THREE.Vector3(1, 0, 0).applyQuaternion(g.quaternion), -g.scale.x * SW * 0.5);
+  }
+  // Büyük ekranın 4 köşesi (dünya): dışına tıklama = kapat
+  function screenQuad() {
+    if (!cur || !cur.clone) return null;
+    const g = cur.clone.group; g.updateMatrixWorld(true);
+    const P = (sx, sy) => new THREE.Vector3(sx * SW / 2, sy * SH / 2, 0.03).applyMatrix4(g.matrixWorld);
+    return [P(-1, 1), P(1, 1), P(1, -1), P(-1, -1)];
+  }
+
+  return { open, close, update, linkQuad, screenQuad, pointTarget, cloneCenter: () => (cur && cur.clone ? cur.clone.group.position : null), get active() { return cur; } };
 }

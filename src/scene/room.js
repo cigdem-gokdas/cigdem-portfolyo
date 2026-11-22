@@ -58,7 +58,7 @@ export function createRoom() {
   spot.target.position.set(0, 0.8, 0);
   spot.castShadow = true;
   spot.shadow.mapSize.set(1024, 1024);
-  spot.shadow.bias = -0.0005;
+  spot.shadow.bias = -0.0005; spot.shadow.normalBias = 0.04;
   room.add(spot, spot.target);
   const hemi = new THREE.HemisphereLight(0x3a4a6a, 0x05060a, 0.55);
   room.add(hemi);

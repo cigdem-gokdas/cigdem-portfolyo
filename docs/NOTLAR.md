@@ -163,3 +163,14 @@ Kullanılan/doğrulanan davranışlar (dosya:satır, src/vendor/talkinghead/talk
 - Bakış: kendi baş/boyun (%70) + göz kemiği (kalan, gecikme dahil) delta'sı; TH `lookAt/makeEyeContact` KULLANILMADI (random drot, kuyruk anim, bone yerine morph).
 - `lipsyncLang:'en'`, `lipsyncModules:[]`, `ttsEndpoint:''`; `words` hiç verilmediği için lipsync modülü aranmaz (TH:3112, 2832-2854).
 - Dikkat: `head.stop()` ses bağlamını askıya alır (TH:4309-4311) — çağrılmıyor.
+
+---
+
+## F6 (Yapımcı) — büyük ekran, yürüyüş, takımyıldız
+
+- Masaüstünde sağ panel YOK: seçilen ekranın klonu büyür (kadraj genişliğinin ~%62'si, NDC merkezi +0.2, avatar solda ~-0.66). İçerik katmanları src/scene/screenLayout.js (canvas ölçümü, punto küçülür, çipler satır kaydırır). Panel (src/ui/panel.js) yalnız mobil yol ve düz liste için kalır.
+- "Projeyi aç": gerçek HTML `<a target=_blank rel=noopener>` (src/ui/bigScreen.js), her karede 3D düğmenin 4 köşesi `project()` edilip sınırlayıcı kutuya oturur (reveal.linkQuad). Otomatik açma yok. Kapat: düğme, Esc, ekran dışına tıklama.
+- Klon malzemeleri depthTest kapalı: sahnedeki daha yakın nesneler (eğitim çerçevesi vb.) büyük ekranı kesmesin.
+- YÜRÜYÜŞ KÖK NEDENİ: TalkingHead 'straight' pozu simetrik değil (ayaklar dışa 18°/13°, ağırlık sol ayakta, ayak bileği orta noktası ~3 cm yana) ve poz yürürken de aynen yazılıyor; bacak deltaları bunun üstüne biniyordu. Avatar._gaitCorrect: ayaklar yürüme yönüne (3° dışa) döndürülür, ayak bileği orta noktası köke yanal ortalanır; kalça yatışı/dönüşü küçültüldü.
+- Beceriler: halka kaldırıldı (skillRing.js); etiketler 3.0-4.4 m, yarıçap 4.5-5.0 m yayda 5 küme, çok yavaş süzülme, opaklık 0.45 / hover 1.0. Ekran-uzayı çakışma testi (HOME kadrajı, 1440x900 ve 1280x800) temiz.
+- Test kancası: `__portfolyo.camSnap(pos, look, fov)`.
