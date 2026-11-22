@@ -1,0 +1,611 @@
+{
+  "contact": {
+    "github": "https://github.com/cigdem-gokdas",
+    "linkedin": "https://www.linkedin.com/in/%C3%A7i%C4%9Fdem-g%C3%B6kda%C5%9F-48752b254/",
+    "email": "cigdemgokdas01@gmail.com",
+    "phone": "0538 295 13 48"
+  },
+  "sections": [
+    {
+      "id": "projeler",
+      "type": "project",
+      "title": "Projeler",
+      "items": [
+        {
+          "id": "proje-the-pile",
+          "title": "The Pile",
+          "meta": "İşler Teknoloji staj projesi, 10/07/2026 – devam ediyor",
+          "summary": "Steam ve Epic Games arayüzlerini tek platformda birleştiren ortak oyun veritabanı. Staj ekibiyle geliştiriyoruz.",
+          "bullets": [
+            "Full-stack görevler ve kimlik doğrulama rotaları",
+            "Cross-origin yapılandırma hatalarının çözümü",
+            "Uzak depo güncellemeleri terminal komutlarıyla"
+          ],
+          "tech": [],
+          "url": null
+        },
+        {
+          "id": "proje-fairy-headquarters",
+          "title": "Fairy Headquarters",
+          "meta": "01/10/2026 – devam ediyor",
+          "summary": "Birden fazla yapay zeka ajanını koordineli ekip gibi çalıştıran kişisel çalışma alanı.",
+          "bullets": [
+            "Go backend ve macOS uygulaması",
+            "Görev yönetimi, kalıcı hafıza, insan onayı akışları"
+          ],
+          "tech": [
+            "Go",
+            "macOS"
+          ],
+          "url": "https://github.com/cigdem-gokdas/AI-agent-office"
+        },
+        {
+          "id": "proje-sherlockai",
+          "title": "SherlockAi",
+          "meta": "25/02/2026 – devam ediyor",
+          "summary": "Anlatı yapılarını gelişmiş yapay zeka modelleriyle birleştiren dedektif oyunu.",
+          "bullets": [],
+          "tech": [
+            "Python",
+            "FalkorDB",
+            "Ollama",
+            "ChromaDB",
+            "bilgi grafikleri"
+          ],
+          "url": "https://github.com/cigdem-gokdas/SherlockAi"
+        },
+        {
+          "id": "proje-ne-giysem",
+          "title": "Ne Giysem?",
+          "meta": "15/09/2026 – 27/09/2026",
+          "summary": "Gardırop fotoğraflarını otomatik etiketleyen ve sohbet arayüzüyle kombin öneren mobil uygulama.",
+          "bullets": [
+            "GPT-6 Luna Vision ile otomatik etiketleme",
+            "Bağlama uygun kombin önerisi"
+          ],
+          "tech": [
+            "React Native",
+            "GPT-6 Luna Vision"
+          ],
+          "url": "https://github.com/cigdem-gokdas/Ne-Giysem-"
+        },
+        {
+          "id": "proje-goktas-matbaa",
+          "title": "Göktaş Matbaa web sitesi",
+          "meta": "15/04/2026 – 28/04/2026",
+          "summary": "İlk gerçek projem: yerel bir matbaa için duyarlı web sitesi.",
+          "bullets": [
+            "Mobil uyumlu yerleşim",
+            "Sayfa yenilemeden e-postaya giden serverless Netlify formu",
+            "Google Search Console'a ekleme"
+          ],
+          "tech": [
+            "HTML",
+            "Tailwind CSS",
+            "JavaScript",
+            "Netlify"
+          ],
+          "url": "https://goktasmatbaa.netlify.app"
+        },
+        {
+          "id": "proje-gelecegin-gelenekle",
+          "title": "Geleceğin Gelenekle Buluşması",
+          "meta": "01/04/2026 – 01/05/2026",
+          "summary": "AksuVital için yapay zeka ile üretilmiş marka filmi.",
+          "bullets": [
+            "Tüm promptları ve anlatı metinlerini yazdım",
+            "Görsel anlatımı yönettim"
+          ],
+          "tech": [
+            "Google Veo",
+            "ElevenLabs",
+            "CapCut"
+          ],
+          "url": "https://drive.google.com/file/d/1pFMjaBzx8kULQdg14d-EmS28i5mLngUt/view?usp=drive_link"
+        },
+        {
+          "id": "proje-media-archive",
+          "title": "media-archive",
+          "meta": "10/11/2025 – 10/12/2025",
+          "summary": "Polyglot persistence mimarisiyle kişisel medya arşivi yöneticisi.",
+          "bullets": [],
+          "tech": [
+            "Python",
+            "Playwright",
+            "Selenium",
+            "MongoDB",
+            "FalkorDB",
+            "Git",
+            "VS Code",
+            "Pylint"
+          ],
+          "url": "https://github.com/cigdem-gokdas/media-archive"
+        },
+        {
+          "id": "proje-screenshots",
+          "title": "Screenshots",
+          "meta": "01/11/2026 – devam ediyor",
+          "summary": "Unutulmuş ekran görüntülerini yapılandırılmış yapılacaklar listesine çeviren, çevrimdışı öncelikli iOS uygulaması.",
+          "bullets": [
+            "Apple Vision OCR ve yerel SQLite (Drift) depolama",
+            "Bulut yapay zeka yok, EXIF temizleme, şifreli yerel depolama",
+            "EN/TR dil desteği, Firebase kimlik doğrulama, RevenueCat abonelikleri"
+          ],
+          "tech": [
+            "Flutter",
+            "Apple Vision",
+            "SQLite",
+            "Drift",
+            "Firebase",
+            "RevenueCat"
+          ],
+          "url": "https://github.com/cigdem-gokdas/Screenshots"
+        }
+      ]
+    },
+    {
+      "id": "hackathonlar",
+      "type": "hackathon",
+      "title": "Hackathonlar",
+      "items": [
+        {
+          "id": "hackathon-isleyen",
+          "title": "İşleyen",
+          "meta": "Google Developer Group Hackathon, 2. lik, 15/05/2026 – 17/05/2026",
+          "summary": "Her öğrenci için gerçek zamanlı sınav davranışından dijital öğrenme ikizi oluşturuyor.",
+          "bullets": [
+            "Hız, doğruluk, ipucu kullanımı ve güven düzeyini analiz eder",
+            "Google Gemini AI ile öğrenme personalarını ve bilişsel, davranışsal sorunları belirler",
+            "Öğrenci, öğretmen ve veli için mikro müdahaleler üretir"
+          ],
+          "tech": [
+            "Google Gemini AI"
+          ],
+          "url": "https://github.com/cigdem-gokdas/hackathon"
+        },
+        {
+          "id": "hackathon-aura",
+          "title": "AURA - Autonomous Unified Risk Agent",
+          "meta": "Agentic Trading Hackathon, 12/09/2026 – 20/09/2026",
+          "summary": "Likit spot piyasaları tarayıp işlem fırsatlarını gerçek zamanlı puanlayan otonom sistem.",
+          "bullets": [
+            "LLM tabanlı Market Critic (Actor-Critic) hipotezleri sınar",
+            "Nihai işlem için kurallı, deterministik risk motoru",
+            "İşlem süreçlerini ve risk metriklerini izleyen panel"
+          ],
+          "tech": [
+            "LLM",
+            "Actor-Critic"
+          ],
+          "url": "https://github.com/cigdem-gokdas/AURA"
+        }
+      ]
+    },
+    {
+      "id": "deneyim",
+      "type": "experience",
+      "title": "İş Deneyimi",
+      "items": [
+        {
+          "id": "deneyim-isler-teknoloji",
+          "title": "Yazılım Mühendisliği Stajyeri, İşler Teknoloji",
+          "meta": "10/07/2026 – 06/09/2026, İstanbul",
+          "summary": "Diğer stajyerlerle sıfırdan yeni bir proje geliştiriyoruz. Şirketin full-stack geliştiricileri mentorluk yapıyor.",
+          "bullets": [
+            "Backend'den frontend'e tüm geliştirme süreci",
+            "SQL Injection, IDOR/BOLA, XSS, Command Injection, JWT, CSRF konularında uygulamalı deneyim"
+          ],
+          "tech": [],
+          "url": null
+        },
+        {
+          "id": "deneyim-goktas-matbaa",
+          "title": "Yarı Zamanlı Muhasebe Asistanı, Göktaş Matbaa",
+          "meta": "01/06/2024 – devam ediyor, İstanbul",
+          "summary": "Günlük muhasebe işlerine yardım ediyorum.",
+          "bullets": [
+            "Gelir, gider ve faturaları takip eden Excel tabloları hazırladım",
+            "Veri girişini elle yaptım, kayıtları güncel tuttum"
+          ],
+          "tech": [
+            "Excel"
+          ],
+          "url": null
+        },
+        {
+          "id": "deneyim-skylab",
+          "title": "Takım Üyesi, Skylab",
+          "meta": "26/10/2026 – devam ediyor",
+          "summary": "İki haftada bir ekip toplantıları ve ilerleme değerlendirmelerine katılıyorum.",
+          "bullets": [
+            "Haftalık araştırma ve sunum",
+            "Sektör liderlerine kurumsal ziyaretler"
+          ],
+          "tech": [],
+          "url": null
+        }
+      ]
+    },
+    {
+      "id": "egitim",
+      "type": "education",
+      "title": "Eğitim",
+      "items": [
+        {
+          "id": "egitim-yildiz",
+          "title": "Matematik Lisans, Yıldız Teknik Üniversitesi",
+          "meta": "01/09/2026 – devam ediyor, İstanbul",
+          "summary": "İstinye Üniversitesi Bilgisayar Mühendisliği programından geçişle devam ediyorum.",
+          "bullets": [
+            "Matematik, analitik düşünme ve problem çözme temeli",
+            "İlgi alanları: yapay zeka, veri bilimi, hesaplamalı uygulamalar"
+          ],
+          "tech": [],
+          "url": null
+        },
+        {
+          "id": "egitim-42",
+          "title": "Kodlama Bootcamp'i (Piscine), 42 Istanbul",
+          "meta": "03/02/2025 – 01/03/2025, İstanbul",
+          "summary": "4 haftalık yoğun bootcamp. Öğretmensiz, akranlar arası öğrenme sistemi.",
+          "bullets": [
+            "C programlama, git ve shell scripting temelleri"
+          ],
+          "tech": [
+            "C",
+            "git",
+            "shell"
+          ],
+          "url": null
+        },
+        {
+          "id": "egitim-istinye",
+          "title": "Bilgisayar Mühendisliği Lisans, İstinye Üniversitesi",
+          "meta": "01/09/2024 – 30/06/2026, İstanbul",
+          "summary": "İlk iki yılı %100 başarı bursuyla tamamladım. GPA: 3.22.",
+          "bullets": [
+            "Programlama (Python, C++)",
+            "Veritabanı Yönetimi, Algoritma Tasarımı"
+          ],
+          "tech": [
+            "Python",
+            "C++"
+          ],
+          "url": null
+        }
+      ]
+    },
+    {
+      "id": "beceriler",
+      "type": "skills",
+      "title": "Beceriler",
+      "groups": [
+        {
+          "name": "Diller",
+          "items": [
+            {
+              "name": "Python",
+              "source": [
+                "SherlockAi",
+                "media-archive"
+              ]
+            },
+            {
+              "name": "TypeScript",
+              "source": [
+                "Fairy Headquarters",
+                "Ne Giysem?",
+                "AURA",
+                "İşleyen"
+              ]
+            },
+            {
+              "name": "JavaScript",
+              "source": [
+                "Göktaş Matbaa web sitesi",
+                "vulnnotes-lab"
+              ]
+            },
+            {
+              "name": "Go",
+              "source": [
+                "Fairy Headquarters"
+              ]
+            },
+            {
+              "name": "Dart",
+              "source": [
+                "Screenshots",
+                "Etkinlikler"
+              ]
+            },
+            {
+              "name": "C",
+              "source": [
+                "42 Istanbul"
+              ]
+            },
+            {
+              "name": "C++",
+              "source": [
+                "İstinye Üniversitesi"
+              ]
+            },
+            {
+              "name": "HTML",
+              "source": [
+                "Göktaş Matbaa web sitesi"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Web ve mobil",
+          "items": [
+            {
+              "name": "React",
+              "source": [
+                "Fairy Headquarters",
+                "AURA",
+                "Ne Giysem?",
+                "İşleyen"
+              ]
+            },
+            {
+              "name": "Next.js",
+              "source": [
+                "İşleyen"
+              ]
+            },
+            {
+              "name": "React Native",
+              "source": [
+                "Ne Giysem?"
+              ]
+            },
+            {
+              "name": "Expo",
+              "source": [
+                "Ne Giysem?"
+              ]
+            },
+            {
+              "name": "Flutter",
+              "source": [
+                "Screenshots",
+                "Etkinlikler"
+              ]
+            },
+            {
+              "name": "Tailwind CSS",
+              "source": [
+                "Göktaş Matbaa web sitesi",
+                "Fairy Headquarters"
+              ]
+            },
+            {
+              "name": "Three.js",
+              "source": [
+                "Fairy Headquarters"
+              ]
+            },
+            {
+              "name": "React Three Fiber",
+              "source": [
+                "Fairy Headquarters"
+              ]
+            },
+            {
+              "name": "Vite",
+              "source": [
+                "Fairy Headquarters",
+                "AURA"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Backend ve veri",
+          "items": [
+            {
+              "name": "FastAPI",
+              "source": [
+                "SherlockAi"
+              ]
+            },
+            {
+              "name": "Express",
+              "source": [
+                "vulnnotes-lab"
+              ]
+            },
+            {
+              "name": "Cloudflare Workers",
+              "source": [
+                "Ne Giysem?"
+              ]
+            },
+            {
+              "name": "Firebase",
+              "source": [
+                "Ne Giysem?",
+                "Screenshots"
+              ]
+            },
+            {
+              "name": "Supabase (PostgreSQL)",
+              "source": [
+                "İşleyen",
+                "Etkinlikler"
+              ]
+            },
+            {
+              "name": "MongoDB",
+              "source": [
+                "media-archive"
+              ]
+            },
+            {
+              "name": "FalkorDB",
+              "source": [
+                "media-archive",
+                "SherlockAi"
+              ]
+            },
+            {
+              "name": "ChromaDB",
+              "source": [
+                "SherlockAi"
+              ]
+            },
+            {
+              "name": "SQLite (Drift)",
+              "source": [
+                "Screenshots"
+              ]
+            },
+            {
+              "name": "Netlify",
+              "source": [
+                "Göktaş Matbaa web sitesi"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Yapay zeka",
+          "items": [
+            {
+              "name": "Ollama",
+              "source": [
+                "SherlockAi"
+              ]
+            },
+            {
+              "name": "Qwen3",
+              "source": [
+                "SherlockAi"
+              ]
+            },
+            {
+              "name": "Gemma3",
+              "source": [
+                "SherlockAi"
+              ]
+            },
+            {
+              "name": "Google Gemini",
+              "source": [
+                "İşleyen",
+                "SherlockAi"
+              ]
+            },
+            {
+              "name": "OpenAI",
+              "source": [
+                "Ne Giysem?",
+                "AURA"
+              ]
+            },
+            {
+              "name": "Model Context Protocol (MCP)",
+              "source": [
+                "AURA"
+              ]
+            },
+            {
+              "name": "Google Veo",
+              "source": [
+                "Geleceğin Gelenekle Buluşması"
+              ]
+            },
+            {
+              "name": "ElevenLabs",
+              "source": [
+                "Geleceğin Gelenekle Buluşması"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Araçlar",
+          "items": [
+            {
+              "name": "Git",
+              "source": [
+                "media-archive",
+                "42 Istanbul"
+              ]
+            },
+            {
+              "name": "Shell",
+              "source": [
+                "42 Istanbul"
+              ]
+            },
+            {
+              "name": "Docker",
+              "source": [
+                "media-archive"
+              ]
+            },
+            {
+              "name": "Playwright",
+              "source": [
+                "media-archive"
+              ]
+            },
+            {
+              "name": "Selenium",
+              "source": [
+                "media-archive"
+              ]
+            },
+            {
+              "name": "RevenueCat",
+              "source": [
+                "Screenshots",
+                "Ne Giysem?"
+              ]
+            },
+            {
+              "name": "Apple Vision",
+              "source": [
+                "Screenshots"
+              ]
+            },
+            {
+              "name": "CapCut",
+              "source": [
+                "Geleceğin Gelenekle Buluşması"
+              ]
+            },
+            {
+              "name": "Excel",
+              "source": [
+                "Göktaş Matbaa (muhasebe)"
+              ]
+            }
+          ]
+        }
+      ],
+      "items": []
+    },
+    {
+      "id": "diller",
+      "type": "other",
+      "title": "Dil Becerileri",
+      "items": [
+        {
+          "id": "dil-ingilizce",
+          "title": "İngilizce",
+          "meta": "Ana dil: Türkçe",
+          "summary": "Dinleme ve okuma C1; konuşma ve yazma B2.",
+          "bullets": [],
+          "tech": [],
+          "url": null
+        }
+      ]
+    }
+  ]
+}

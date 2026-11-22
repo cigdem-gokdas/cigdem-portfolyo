@@ -1,0 +1,122 @@
+[
+  {
+    "id": "karsilama",
+    "text": "Merhaba, ben Çiğdem. Bir ekrana tıkla.",
+    "where": "Sayfa açıldığında"
+  },
+  {
+    "id": "proje-the-pile",
+    "text": "Bu, The Pile. Staj ekibimle geliştirdiğimiz ortak oyun veritabanı.",
+    "where": "The Pile istasyonu seçilince"
+  },
+  {
+    "id": "proje-fairy-headquarters",
+    "text": "Bu, Fairy Headquarters. Yapay zeka ajanlarını ekip gibi çalıştıran kişisel çalışma alanım.",
+    "where": "Fairy Headquarters istasyonu seçilince"
+  },
+  {
+    "id": "proje-sherlockai",
+    "text": "Bu, SherlockAi. Yapay zeka destekli bir dedektif oyunu.",
+    "where": "SherlockAi istasyonu seçilince"
+  },
+  {
+    "id": "proje-ne-giysem",
+    "text": "Bu, Ne Giysem. Gardırop fotoğraflarından kombin öneren mobil uygulama.",
+    "where": "Ne Giysem istasyonu seçilince"
+  },
+  {
+    "id": "proje-goktas-matbaa",
+    "text": "Bu, Göktaş Matbaa web sitesi. İlk gerçek projem.",
+    "where": "Göktaş Matbaa istasyonu seçilince"
+  },
+  {
+    "id": "proje-gelecegin-gelenekle",
+    "text": "Bu, AksuVital için yaptığım yapay zeka marka filmi.",
+    "where": "Geleceğin Gelenekle Buluşması istasyonu seçilince"
+  },
+  {
+    "id": "proje-media-archive",
+    "text": "Bu, media-archive. Kişisel medya arşivi yöneticisi.",
+    "where": "media-archive istasyonu seçilince"
+  },
+  {
+    "id": "proje-screenshots",
+    "text": "Bu, Screenshots. Ekran görüntülerini yapılacaklar listesine çeviren iOS uygulaması.",
+    "where": "Screenshots istasyonu seçilince"
+  },
+  {
+    "id": "hackathon",
+    "text": "Bunlar katıldığım hackathonlar.",
+    "where": "Hackathonlar bölümü açılınca"
+  },
+  {
+    "id": "hackathon-isleyen",
+    "text": "Bu, İşleyen. Google Developer Group Hackathon'da ikinci olduk.",
+    "where": "İşleyen istasyonu seçilince"
+  },
+  {
+    "id": "hackathon-aura",
+    "text": "Bu, AURA. Agentic Trading Hackathon için yaptığım otonom risk ajanı.",
+    "where": "AURA istasyonu seçilince"
+  },
+  {
+    "id": "deneyim",
+    "text": "Bunlar iş deneyimlerim.",
+    "where": "Deneyim bölümü açılınca"
+  },
+  {
+    "id": "deneyim-isler-teknoloji",
+    "text": "İşler Teknoloji'de yazılım mühendisliği stajı yaptım.",
+    "where": "İşler Teknoloji istasyonu seçilince"
+  },
+  {
+    "id": "deneyim-goktas-matbaa",
+    "text": "Burada Göktaş Matbaa'da yarı zamanlı muhasebe asistanıyım.",
+    "where": "Göktaş Matbaa deneyim istasyonu seçilince"
+  },
+  {
+    "id": "deneyim-skylab",
+    "text": "Burada Skylab ekibinin üyesiyim.",
+    "where": "Skylab istasyonu seçilince"
+  },
+  {
+    "id": "egitim",
+    "text": "Bu, eğitimim.",
+    "where": "Eğitim bölümü açılınca"
+  },
+  {
+    "id": "egitim-yildiz",
+    "text": "Şu an Yıldız Teknik Üniversitesi'nde matematik okuyorum.",
+    "where": "Yıldız Teknik istasyonu seçilince"
+  },
+  {
+    "id": "egitim-42",
+    "text": "42 Istanbul'da dört haftalık Piscine yaptım.",
+    "where": "42 Istanbul istasyonu seçilince"
+  },
+  {
+    "id": "egitim-istinye",
+    "text": "İstinye Üniversitesi'nde bilgisayar mühendisliği okudum.",
+    "where": "İstinye istasyonu seçilince"
+  },
+  {
+    "id": "dil",
+    "text": "İngilizcem okuma ve dinlemede C1, konuşma ve yazmada B2.",
+    "where": "Dil istasyonu seçilince"
+  },
+  {
+    "id": "beceriler",
+    "text": "Bunlar kullandığım teknolojiler.",
+    "where": "Beceri halkası tıklanınca"
+  },
+  {
+    "id": "avatar-tik",
+    "text": "Merhaba.",
+    "where": "Avatara tıklanınca"
+  },
+  {
+    "id": "bosta",
+    "text": "Bir ekrana tıklayabilirsin.",
+    "where": "Bir süre etkileşim olmayınca"
+  }
+]
