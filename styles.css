@@ -1,17 +1,121 @@
-/* Gece Stüdyosu: 1 nötr + 1 vurgu, tek font, gölgesiz arayüz */
-:root { --zemin: #07090f; --nötr: #c9ced8; --vurgu: #7cf3ff; }
+/* Sınıf tahtası: duvar, ahşap çerçeve, yeşil yüzey, tebeşir yazısı. Yazı tipi: Kalam (yerel, OFL) */
+@font-face {
+  font-family: 'Kalam';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./assets/fonts/kalam-latin-ext-400.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Kalam';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./assets/fonts/kalam-latin-400.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Kalam';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(./assets/fonts/kalam-latin-ext-700.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Kalam';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(./assets/fonts/kalam-latin-700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --tebesir: #f3f1e8; --tebesir-soluk: rgba(243, 241, 232, .78); --tebesir-hafif: rgba(243, 241, 232, .55);
+  --sari: #f4e08e; --pembe: #f4b9c4; --mavi: #a9d6ee;
+  --tahta-yesil: #2f4a3a; --tahta-koyu: #1e3227;
+  --ahsap1: #b3855a; --ahsap2: #8c6239; --ahsap3: #6d4a2b;
+  --font: "Kalam", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --avatar-w: min(58vw, 900px);
+  --tahta-sol: min(31vw, 460px);
+  --raf-h: 10vh;
+  --ses: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .8 -.28'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --leke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='640'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .014' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 3.4 0 0 0 -1.45'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --damar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .35' numOctaves='3' seed='2'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .14 0 0 0 0 .05 2.2 0 0 0 -.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--zemin); overflow: hidden;
-  font-family: "Inter", system-ui, sans-serif; color: var(--nötr); }
-#sahne { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-#ust { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between;
-  padding: 20px 28px; font-size: 14px; letter-spacing: .04em; pointer-events: none; }
-#ust a { pointer-events: auto; color: var(--nötr); text-decoration: none; opacity: .7; transition: color .2s, opacity .2s; }
-#ust a:hover { color: var(--vurgu); opacity: 1; }
-#altyazi { position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%); max-width: 80vw;
-  padding: 8px 16px; border-radius: 6px; background: rgba(7, 9, 15, .65); font-size: 14px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .4s; pointer-events: none; }
+html, body { margin: 0; height: 100%; background: #cfc7ae; overflow: hidden;
+  font-family: var(--font); font-size: 19px; color: var(--tebesir); -webkit-font-smoothing: antialiased; }
+
+/* Duvar */
+#zemin { position: fixed; inset: 0; z-index: 0;
+  background:
+    var(--ses),
+    radial-gradient(90vw 70vh at 50% 40%, rgba(255, 252, 235, .35), transparent 70%),
+    linear-gradient(180deg, #d6ceb6, #c4bba0 70%, #b3aa90); background-blend-mode: soft-light, normal, normal; }
+.cerceve-ahsap { position: absolute; left: 1.2vw; right: 1.2vw; top: 1.6vh; bottom: calc(var(--raf-h) + .4vh); padding: 14px; border-radius: 6px;
+  background: var(--damar), repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 9px), linear-gradient(180deg, var(--ahsap1), var(--ahsap2) 50%, var(--ahsap3));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .3), inset 0 -2px 0 rgba(0, 0, 0, .3), 0 18px 34px rgba(0, 0, 0, .35); }
+.yuzey { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 3px;
+  background:
+    radial-gradient(70% 60% at 22% 18%, rgba(255, 255, 255, .07), transparent 70%),
+    radial-gradient(60% 55% at 85% 80%, rgba(0, 0, 0, .14), transparent 70%),
+    linear-gradient(170deg, #35553f, var(--tahta-yesil) 50%, #2a4234);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .35), inset 0 10px 40px rgba(0, 0, 0, .35), inset 0 -30px 60px rgba(255, 255, 255, .04); }
+.yuzey::before { content: ""; position: absolute; inset: 0; opacity: .17; background: var(--leke) 0 0 / 100% 100% no-repeat; }
+.yuzey::after { content: ""; position: absolute; inset: 0; opacity: .55; background: var(--ses); mix-blend-mode: soft-light; }
+.sus-sol { position: absolute; color: var(--tebesir); opacity: .2; pointer-events: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sus-sol.a { left: 3%; top: 10%; width: 70px; transform: rotate(-12deg); }
+.sus-sol.b { left: 5%; bottom: 8%; width: 60px; }
+.sus-sol.c { left: 19%; top: 7%; width: 80px; }
+
+/* Tebeşir rafı */
+.raf { position: absolute; left: 0; right: 0; bottom: 0; height: var(--raf-h);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .28) 0 2px, transparent 2px),
+    var(--damar),
+    linear-gradient(180deg, #c29868 0 40%, #7a5431 40% 43%, #8d643b 43%, #6a4829); 
+  box-shadow: 0 -4px 14px rgba(0, 0, 0, .3); }
+.raf svg { position: absolute; right: 9vw; bottom: calc(var(--raf-h) * .6 - 1px); width: 250px; height: 44px; overflow: visible; }
+.raf .raf-tebesir { right: auto; left: calc(var(--tahta-sol) + 8vw); width: 110px; height: 26px; }
+
+/* Ad: sol üstte tebeşirle */
+#ust { position: fixed; top: 3.4vh; left: calc(1.2vw + 40px); z-index: 4; pointer-events: none; }
+#ad { display: inline-block; padding: 0 6px 12px; font-size: clamp(28px, 2.4vw, 38px); font-weight: 700; color: var(--tebesir); text-shadow: 0 0 1px rgba(255,255,255,.5), 0 0 8px rgba(255,255,255,.1);
+  filter: url(#tebesir-yazi);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 10' preserveAspectRatio='none'%3E%3Cpath d='M2 6 C30 2 60 8 100 4 S170 7 198 3 M10 9 C60 6 120 9 190 7' fill='none' stroke='%23f3f1e8' stroke-width='2.2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 100% / 100% 10px no-repeat; }
+
+#avatar { position: fixed; left: 0; bottom: 0; width: var(--avatar-w); height: 100vh; z-index: 3; pointer-events: none; display: block; }
+#avatar-yukleniyor { position: fixed; left: calc(var(--tahta-sol) * .42); bottom: 42vh; z-index: 3; width: 40px; height: 40px;
+  border-radius: 50%; border: 3px dashed var(--tebesir-soluk); animation: don 1.4s linear infinite; transition: opacity .5s; }
+#avatar-yukleniyor.bitti { opacity: 0; }
+@keyframes don { to { transform: rotate(360deg); } }
+
+/* Altyazı: rafın üstünde küçük kara tahta */
+#altyazi { position: fixed; left: calc(var(--tahta-sol) + (100vw - var(--tahta-sol)) / 2); bottom: 1.4vh; transform: translateX(-50%); z-index: 5;
+  max-width: min(64vw, 900px); padding: 7px 22px 8px; border-radius: 4px; background: linear-gradient(170deg, #263f31, #1b2d23);
+  border: 3px solid var(--ahsap2); box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 6px 14px rgba(0, 0, 0, .4), inset 0 0 14px rgba(0,0,0,.4);
+  font-size: 19px; line-height: 1.4; color: var(--tebesir); text-shadow: 0 0 1px rgba(255,255,255,.5); text-align: center;
+  opacity: 0; transition: opacity .35s; pointer-events: none; }
 #altyazi.acik { opacity: 1; }
-#yukleme { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 400; letter-spacing: .2em; transition: opacity .8s; z-index: 10; }
+
+#yukleme { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; gap: .4em;
+  background: var(--ses), radial-gradient(80vw 70vh at 50% 40%, #3b5c46, #1d3025); background-blend-mode: soft-light, normal;
+  font-size: clamp(30px, 4vw, 48px); font-weight: 700; color: var(--tebesir); text-shadow: 0 0 1px rgba(255,255,255,.5), 0 0 10px rgba(255,255,255,.12);
+  transition: opacity .8s; z-index: 10; }
+#yukleme::before { content: "Yükleniyor"; }
 #yukleme.bitti { opacity: 0; pointer-events: none; }
+
+@media (max-width: 899px) {
+  :root { --raf-h: 0px; }
+  #avatar, #avatar-yukleniyor, .raf, .sus-sol { display: none; }
+  .cerceve-ahsap { left: 0; right: 0; top: 0; bottom: 0; padding: 7px; border-radius: 0; }
+  #ust { top: 12px; left: 16px; }
+  #ad { font-size: 26px; }
+  #altyazi { left: 50%; max-width: 92vw; bottom: 10px; }
+  html, body { overflow: auto; }
+}
+
+@media (max-width: 899px) { #ust { display: none; } }

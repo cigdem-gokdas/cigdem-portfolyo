@@ -1,0 +1,96 @@
+{
+  "name": "cigdem",
+  "phenotype": {
+    "gender": 0.0,
+    "age": 0.45,
+    "muscle": 0.42,
+    "weight": 0.45,
+    "proportions": 0.75,
+    "height": 0.42,
+    "cupsize": 0.5,
+    "firmness": 0.55,
+    "race": {
+      "caucasian": 0.8,
+      "asian": 0.1,
+      "african": 0.1
+    }
+  },
+  "targets": {
+    "chin-bones-decr": 0.273,
+    "chin-height-decr": 0.591,
+    "eyebrows-trans-up": 0.979,
+    "head-diamond": 0.537,
+    "head-invertedtriangular": 0.194,
+    "head-scale-horiz-decr": 0.3,
+    "head-scale-vert-decr": 0.15,
+    "l-cheek-bones-decr": 0.366,
+    "l-eye-height1-incr": 0.101,
+    "l-eye-height2-incr": 0.152,
+    "l-eye-scale-incr": 0.061,
+    "mouth-cupidsbow-incr": 0.3,
+    "mouth-lowerlip-height-decr": 0.1,
+    "mouth-lowerlip-volume-incr": 0.4,
+    "mouth-scale-horiz-incr": 0.353,
+    "mouth-trans-up": 0.09,
+    "mouth-upperlip-height-decr": 0.15,
+    "mouth-upperlip-volume-incr": 0.35,
+    "nose-hump-decr": 0.3,
+    "nose-point-width-decr": 0.15,
+    "nose-scale-horiz-incr": 0.119,
+    "nose-trans-down": 0.437,
+    "r-cheek-bones-decr": 0.366,
+    "r-eye-height1-incr": 0.101,
+    "r-eye-height2-incr": 0.152,
+    "r-eye-scale-incr": 0.061
+  },
+  "skin": "skalldyrssuppe_creamy_female",
+  "eyes": "high-poly",
+  "eyebrows": "mindfront_eyebrows_12",
+  "eyelashes": "eyelashes03",
+  "teeth": "teeth_base",
+  "tongue": "tongue01",
+  "hair": "punkduck_alpha7_long",
+  "hair_color": [
+    0.17,
+    0.095,
+    0.055
+  ],
+  "clothes": [
+    "female_casualsuit01"
+  ],
+  "rig": "mixamo",
+  "hair_gain": 1.0,
+  "eye_texture": "tools/avatar/textures/cigdem_eye.png",
+  "clothes_color": [
+    0.018,
+    0.018,
+    0.022
+  ],
+  "lip_color": [
+    0.62,
+    0.24,
+    0.27
+  ],
+  "brow_color": [
+    0.06,
+    0.035,
+    0.025
+  ],
+  "scalp": {
+    "front": 0.1,
+    "back": 0.012,
+    "feather": 0.03
+  },
+  "skin_tint": [
+    1.0,
+    0.9,
+    0.8
+  ],
+  "hair_fade": {
+    "front_y": 0.0,
+    "half_w": 0.055,
+    "x_feather": 0.02,
+    "z0": 0.07,
+    "z_feather": 0.03
+  }
+}

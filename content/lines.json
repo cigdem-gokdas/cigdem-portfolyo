@@ -1,48 +1,53 @@
 [
   {
     "id": "karsilama",
-    "text": "Merhaba, ben Çiğdem. Bir ekrana tıkla.",
+    "text": "Merhaba, ben Çiğdem. Bir başlık seç, sana anlatayım.",
     "where": "Sayfa açıldığında"
+  },
+  {
+    "id": "projeler",
+    "text": "Bunlar projelerim. Birine bas, anlatayım.",
+    "where": "Projeler bölümü açılınca"
   },
   {
     "id": "proje-the-pile",
     "text": "Bu, The Pile. Staj ekibimle geliştirdiğimiz ortak oyun veritabanı.",
-    "where": "The Pile istasyonu seçilince"
+    "where": "The Pile açılınca"
   },
   {
     "id": "proje-fairy-headquarters",
     "text": "Bu, Fairy Headquarters. Yapay zeka ajanlarını ekip gibi çalıştıran kişisel çalışma alanım.",
-    "where": "Fairy Headquarters istasyonu seçilince"
+    "where": "Fairy Headquarters açılınca"
   },
   {
     "id": "proje-sherlockai",
     "text": "Bu, SherlockAi. Yapay zeka destekli bir dedektif oyunu.",
-    "where": "SherlockAi istasyonu seçilince"
+    "where": "SherlockAi açılınca"
   },
   {
     "id": "proje-ne-giysem",
     "text": "Bu, Ne Giysem. Gardırop fotoğraflarından kombin öneren mobil uygulama.",
-    "where": "Ne Giysem istasyonu seçilince"
+    "where": "Ne Giysem açılınca"
   },
   {
     "id": "proje-goktas-matbaa",
     "text": "Bu, Göktaş Matbaa web sitesi. İlk gerçek projem.",
-    "where": "Göktaş Matbaa istasyonu seçilince"
+    "where": "Göktaş Matbaa açılınca"
   },
   {
     "id": "proje-gelecegin-gelenekle",
     "text": "Bu, AksuVital için yaptığım yapay zeka marka filmi.",
-    "where": "Geleceğin Gelenekle Buluşması istasyonu seçilince"
+    "where": "Geleceğin Gelenekle Buluşması açılınca"
   },
   {
     "id": "proje-media-archive",
     "text": "Bu, media-archive. Kişisel medya arşivi yöneticisi.",
-    "where": "media-archive istasyonu seçilince"
+    "where": "media-archive açılınca"
   },
   {
     "id": "proje-screenshots",
     "text": "Bu, Screenshots. Ekran görüntülerini yapılacaklar listesine çeviren iOS uygulaması.",
-    "where": "Screenshots istasyonu seçilince"
+    "where": "Screenshots açılınca"
   },
   {
     "id": "hackathon",
@@ -52,12 +57,12 @@
   {
     "id": "hackathon-isleyen",
     "text": "Bu, İşleyen. Google Developer Group Hackathon'da ikinci olduk.",
-    "where": "İşleyen istasyonu seçilince"
+    "where": "İşleyen açılınca"
   },
   {
     "id": "hackathon-aura",
     "text": "Bu, AURA. Agentic Trading Hackathon için yaptığım otonom risk ajanı.",
-    "where": "AURA istasyonu seçilince"
+    "where": "AURA açılınca"
   },
   {
     "id": "deneyim",
@@ -67,17 +72,17 @@
   {
     "id": "deneyim-isler-teknoloji",
     "text": "İşler Teknoloji'de yazılım mühendisliği stajı yaptım.",
-    "where": "İşler Teknoloji istasyonu seçilince"
+    "where": "İşler Teknoloji açılınca"
   },
   {
     "id": "deneyim-goktas-matbaa",
     "text": "Burada Göktaş Matbaa'da yarı zamanlı muhasebe asistanıyım.",
-    "where": "Göktaş Matbaa deneyim istasyonu seçilince"
+    "where": "Göktaş Matbaa deneyimi açılınca"
   },
   {
     "id": "deneyim-skylab",
     "text": "Burada Skylab ekibinin üyesiyim.",
-    "where": "Skylab istasyonu seçilince"
+    "where": "Skylab açılınca"
   },
   {
     "id": "egitim",
@@ -87,36 +92,41 @@
   {
     "id": "egitim-yildiz",
     "text": "Şu an Yıldız Teknik Üniversitesi'nde matematik okuyorum.",
-    "where": "Yıldız Teknik istasyonu seçilince"
+    "where": "Yıldız Teknik açılınca"
   },
   {
     "id": "egitim-42",
     "text": "42 Istanbul'da dört haftalık Piscine yaptım.",
-    "where": "42 Istanbul istasyonu seçilince"
+    "where": "42 Istanbul açılınca"
   },
   {
     "id": "egitim-istinye",
     "text": "İstinye Üniversitesi'nde bilgisayar mühendisliği okudum.",
-    "where": "İstinye istasyonu seçilince"
+    "where": "İstinye açılınca"
   },
   {
     "id": "dil",
     "text": "İngilizcem okuma ve dinlemede C1, konuşma ve yazmada B2.",
-    "where": "Dil istasyonu seçilince"
+    "where": "Dil açılınca"
   },
   {
     "id": "beceriler",
     "text": "Bunlar kullandığım teknolojiler.",
-    "where": "Beceri halkası tıklanınca"
+    "where": "Beceriler bölümü açılınca"
   },
   {
     "id": "avatar-tik",
     "text": "Merhaba.",
-    "where": "Avatara tıklanınca"
+    "where": "Avatar selam verince"
   },
   {
     "id": "bosta",
-    "text": "Bir ekrana tıklayabilirsin.",
+    "text": "Bir başlığa basabilirsin.",
     "where": "Bir süre etkileşim olmayınca"
+  },
+  {
+    "id": "iletisim",
+    "text": "Bana buradan ulaşabilirsin.",
+    "where": "İletişim bölümü açılınca"
   }
 ]
